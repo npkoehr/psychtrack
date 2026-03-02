@@ -1240,7 +1240,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                               <button className="btn btn-g btn-sm" onClick={() => toggleDocumented(s)}>
                                 {s.documented ? "⬜ Mark undocumented" : "✅ Mark documented"}
                               </button>
-                              <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete this session?")) { deleteSession(s.id); setExpandedSession(null); } }}>🗑 Delete</button>
+                              <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete this session?")) { deleteSession(s.id); setExpandedSession(null); } }}>Delete</button>
                             </div>
                           </td>
                         </tr>
