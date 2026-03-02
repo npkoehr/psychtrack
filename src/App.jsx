@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 /* ── Supabase ── */
@@ -302,12 +302,13 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Mobile responsive ── */
-html,body{max-width:100%;overflow-x:hidden}
+html{overflow-y:scroll}
+body{overflow-x:hidden;max-width:100%}
 .sg4{grid-template-columns:repeat(4,1fr)}
 
 @media(max-width:700px){
   /* ── Base ── */
-  body{font-size:15px}
+  body{font-size:15px;touch-action:pan-y}
   .sb{display:none}
   .app{display:block}
   .main{margin-left:0;padding-bottom:72px}
@@ -886,6 +887,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterStudent, setFilterStudent] = useState("");
+  const [expandedSession, setExpandedSession] = useState(null);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const selectedStudent = trackMode === "individual" ? students.find(s => s.id === form.studentId) : null;
@@ -998,9 +1000,9 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
           {/* Goal selector — shown when student has multiple goals */}
           {selectedStudent && studentGoals.length > 1 && (
             <div className="fg">
-              <label className="fl">Goal</label>
+              <label className="fl">Goal <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0, color:"var(--txt2)", fontSize:11 }}>(optional)</span></label>
               <select className="fc" value={form.goalId} onChange={e => { setF("goalId", e.target.value); setF("trials",[]); }}>
-                <option value="">Select goal...</option>
+                <option value="">— No specific goal —</option>
                 {studentGoals.map((g,i) => (
                   <option key={g.id} value={g.id}>Goal {i+1}: {g.description ? (g.description.length>50?g.description.slice(0,50)+"…":g.description) : g.goalType}</option>
                 ))}
@@ -1123,7 +1125,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
               </div>
             )}
           </div>
-          <button className="btn btn-p" style={{ width:"100%", justifyContent:"center", marginTop:6 }} onClick={handleSubmit} disabled={(trackMode==="individual" ? (!form.studentId || (studentGoals.length>1 && !form.goalId)) : !form.groupId) || saving}>
+          <button className="btn btn-p" style={{ width:"100%", justifyContent:"center", marginTop:6 }} onClick={handleSubmit} disabled={(trackMode==="individual" ? !form.studentId : !form.groupId) || saving}>
             {saving ? "Saving…" : "＋ Log Session"}
           </button>
         </div>
@@ -1151,37 +1153,101 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
           <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr>
-                <th>Student</th><th>Date</th><th>Direct</th><th>Indirect</th><th>Goal Data</th><th>Notes</th><th>Documented</th><th></th>
+                <th>Student</th><th>Date</th><th>Direct</th><th className="hide-mob">Indirect</th><th className="hide-mob">Goal</th><th>Notes</th><th>Doc</th><th></th>
               </tr></thead>
               <tbody>
                 {visibleSessions.map(s => {
                   const st = students.find(x => x.id === s.studentId);
                   const gd = s.goalData;
                   const goalStr = gd?.pmScore !== undefined ? `📏 ${gd.pmScore}` : gd?.rubricScore ? `📊 ${gd.rubricScore}` : (gd?.correct !== undefined ? `✅ ${gd.correct}  ❌ ${gd.incorrect ?? 0}` : "—");
+                  const isExpanded = expandedSession === s.id;
+                  const trialArr = gd?.trials;
                   return (
-                    <tr key={s.id} style={{ opacity: s.documented ? 1 : 1, background: s.documented ? undefined : "rgba(240,234,255,.35)" }}>
-                      <td>
-                        <strong>{st?.name || "Unknown"}</strong>
-                        {s.groupName && <div style={{ fontSize:10.5, color:"#7c3aed", marginTop:1 }}>👥 {s.groupName}</div>}
-                      </td>
-                      <td style={{ whiteSpace:"nowrap" }}>{s.date}</td>
-                      <td>{s.directMinutes}m</td>
-                      <td>{s.indirectMinutes}m</td>
-                      <td style={{ fontSize:12 }}>{goalStr}</td>
-                      <td style={{ maxWidth:180, fontSize:12, color:"#547060" }}>{s.notes ? (s.notes.length > 55 ? s.notes.slice(0,55)+"…" : s.notes) : <span className="muted">—</span>}</td>
-                      <td style={{ textAlign:"center" }}>
-                        <button
-                          onClick={() => toggleDocumented(s)}
-                          title={s.documented ? "Mark as undocumented" : "Mark as documented"}
-                          style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, lineHeight:1, padding:"2px 6px", borderRadius:6, transition:"transform .1s" }}
-                        >
-                          {s.documented ? "✅" : "⬜"}
-                        </button>
-                      </td>
-                      <td><button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete this session?")) deleteSession(s.id); }}>✕</button></td>
-                    </tr>
+                    <React.Fragment key={s.id}>
+                      <tr
+                        onClick={() => setExpandedSession(isExpanded ? null : s.id)}
+                        style={{ cursor:"pointer", background: isExpanded ? "#f0f7f4" : (s.documented ? undefined : "rgba(240,234,255,.35)"),
+                          borderBottom: isExpanded ? "none" : undefined }}
+                      >
+                        <td>
+                          <strong>{st?.name || "Unknown"}</strong>
+                          {s.groupName && <div style={{ fontSize:10.5, color:"#7c3aed", marginTop:1 }}>👥 {s.groupName}</div>}
+                        </td>
+                        <td style={{ whiteSpace:"nowrap" }}>{s.date}</td>
+                        <td>{s.directMinutes}m</td>
+                        <td className="hide-mob">{s.indirectMinutes}m</td>
+                        <td className="hide-mob" style={{ fontSize:12 }}>{goalStr}</td>
+                        <td style={{ maxWidth:160, fontSize:12, color:"#547060" }}>
+                          {s.notes ? (s.notes.length > 40 ? s.notes.slice(0,40)+"…" : s.notes) : <span className="muted">—</span>}
+                        </td>
+                        <td style={{ textAlign:"center" }} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => toggleDocumented(s)}
+                            title={s.documented ? "Mark as undocumented" : "Mark as documented"}
+                            style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, lineHeight:1, padding:"2px 6px", borderRadius:6 }}
+                          >
+                            {s.documented ? "✅" : "⬜"}
+                          </button>
+                        </td>
+                        <td style={{ fontSize:14, color:"var(--txt2)", textAlign:"center" }}>{isExpanded ? "▲" : "▼"}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr style={{ background:"#f0f7f4" }}>
+                          <td colSpan={8} style={{ padding:"14px 18px 16px", borderBottom:"2px solid var(--bdr)" }}>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:20 }}>
+                              {/* Minutes */}
+                              <div>
+                                <div style={{ fontSize:11, fontWeight:600, color:"var(--txt2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:5 }}>Minutes</div>
+                                <div style={{ display:"flex", gap:12 }}>
+                                  <span style={{ fontSize:14 }}>🕐 Direct: <strong>{s.directMinutes}m</strong></span>
+                                  <span style={{ fontSize:14 }}>📋 Indirect: <strong>{s.indirectMinutes}m</strong></span>
+                                </div>
+                              </div>
+                              {/* Goal data */}
+                              {gd && (gd.pmScore !== undefined || gd.rubricScore || gd.correct !== undefined || trialArr?.length > 0) && (
+                                <div>
+                                  <div style={{ fontSize:11, fontWeight:600, color:"var(--txt2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:5 }}>Goal Data</div>
+                                  {trialArr?.length > 0 ? (
+                                    <div>
+                                      <div style={{ display:"flex", gap:3, flexWrap:"wrap", marginBottom:4 }}>
+                                        {trialArr.map((t, ti) => (
+                                          <span key={ti} style={{ width:24, height:24, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
+                                        ))}
+                                      </div>
+                                      <div style={{ fontSize:13, color:"var(--txt2)" }}>
+                                        {trialArr.filter(t=>t==="C").length}/{trialArr.length} correct ({Math.round(trialArr.filter(t=>t==="C").length/trialArr.length*100)}%)
+                                      </div>
+                                    </div>
+                                  ) : gd.rubricScore ? (
+                                    <span className="bdg bdg-r" style={{ fontSize:13 }}>📊 {gd.rubricScore}</span>
+                                  ) : gd.pmScore !== undefined ? (
+                                    <span style={{ fontSize:16, fontWeight:700, color:"var(--pri)" }}>📏 {gd.pmScore}</span>
+                                  ) : (
+                                    <span style={{ fontSize:13 }}>✅ {gd.correct} correct · ❌ {gd.incorrect ?? 0} incorrect</span>
+                                  )}
+                                </div>
+                              )}
+                              {/* Notes */}
+                              <div style={{ flex:1, minWidth:200 }}>
+                                <div style={{ fontSize:11, fontWeight:600, color:"var(--txt2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:5 }}>Notes</div>
+                                <div style={{ fontSize:14, color:"var(--txt)", lineHeight:1.6, background:"#fff", padding:"10px 13px", borderRadius:9, border:"1px solid var(--bdr)", whiteSpace:"pre-wrap" }}>
+                                  {s.notes || <span style={{ color:"var(--txt2)", fontStyle:"italic" }}>No notes recorded.</span>}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Actions */}
+                            <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"flex-end" }}>
+                              <button className="btn btn-g btn-sm" onClick={() => toggleDocumented(s)}>
+                                {s.documented ? "⬜ Mark undocumented" : "✅ Mark documented"}
+                              </button>
+                              <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete this session?")) { deleteSession(s.id); setExpandedSession(null); } }}>🗑 Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
-                })}
+                })
               </tbody>
             </table>
           </div>
