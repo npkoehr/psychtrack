@@ -125,6 +125,17 @@ function daysUntil(dateStr) {
   return Math.round((target.getTime() - now.getTime()) / 86400000);
 }
 
+/* ── Multi-goal helper ── */
+function getStudentGoals(student) {
+  if (student.goals && student.goals.length > 0) return student.goals;
+  // Legacy: single goal stored at root level
+  if (student.iepGoal || student.goalType) {
+    return [{ id: (student.id||"x")+"-g1", description: student.iepGoal||"", goalType: student.goalType||"trials",
+      trialSize: student.trialSize||5, rubricLevels: student.rubricLevels||[], pmGoalScore: student.pmGoalScore||"", lastPmDate: student.lastPmDate||"" }];
+  }
+  return [];
+}
+
 /* ── Excel Export ── */
 function exportToExcel(students, sessions) {
   if (!window.XLSX) { alert("Export library still loading, please try again."); return; }
@@ -291,30 +302,55 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Mobile responsive ── */
+html,body{max-width:100vw;overflow-x:hidden}
+*{touch-action:manipulation}
 @media(max-width:768px){
+  html{font-size:16px}
   .sb{display:none}
-  .main{margin-left:0;padding-bottom:70px}
-  .topbar{padding:11px 14px}
-  .topbar h2{font-size:16px}
+  .main{margin-left:0;padding-bottom:76px}
+  .topbar{padding:10px 14px}
+  .topbar h2{font-size:15px}
   .topbar-r .sm{display:none}
-  .content{padding:12px 12px}
+  .content{padding:10px;width:100%;box-sizing:border-box}
   .btn-xl{display:none}
   .fr{grid-template-columns:1fr}
   .fr3{grid-template-columns:1fr}
-  .sg{grid-template-columns:repeat(2,1fr)}
-  .md{max-width:100%;max-height:96vh;border-radius:18px 18px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0}
+  .sg{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sc{padding:10px 12px}
+  .sv{font-size:18px}
+  .md{max-width:100%!important;max-height:92vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0}
   .mo{align-items:flex-end;padding:0}
-  .track-grid{grid-template-columns:1fr!important}
-  .tbl th,.tbl td{padding:8px 10px;font-size:12px}
+  .track-grid{grid-template-columns:1fr!important;width:100%}
+  .card{border-radius:10px}
+  .cb{padding:14px}
+  .tbl{font-size:13px}
+  .tbl th{padding:8px 9px;font-size:10px}
+  .tbl td{padding:9px 9px}
+  .fc{font-size:16px!important;padding:11px 12px}
+  select.fc{font-size:16px!important}
+  textarea.fc{font-size:16px!important;min-height:80px}
+  .btn{font-size:14px;padding:10px 16px}
+  .btn-sm{font-size:13px;padding:8px 12px}
+  .pill{font-size:13px;padding:8px 14px}
+  .ch{padding:12px 14px}
+  .ct{font-size:14px}
+  .fl{font-size:12px}
+  .fg{margin-bottom:14px}
+  .login-box{padding:30px 22px}
+  .mb2{padding:14px 16px}
+  .mh{padding:14px 16px 12px}
+  .mf{padding:12px 16px}
+  /* Prevent sideways scroll on tables */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 }
 /* ── Bottom nav (mobile only) ── */
 .bnav{display:none}
 @media(max-width:768px){
-  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);z-index:200;padding:6px 0 max(6px,env(safe-area-inset-bottom));box-shadow:0 -2px 16px rgba(0,0,0,.25)}
-  .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:rgba(184,218,202,.5);transition:color .15s;border:none;background:none;font-family:inherit}
+  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);z-index:200;padding:8px 0 max(10px,env(safe-area-inset-bottom));box-shadow:0 -2px 20px rgba(0,0,0,.3)}
+  .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;color:rgba(184,218,202,.5);transition:color .15s;border:none;background:none;font-family:inherit}
   .bni.active{color:#fff}
-  .bni-ico{font-size:20px;line-height:1}
-  .bni-lbl{font-size:9px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .bni-ico{font-size:22px;line-height:1}
+  .bni-lbl{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
 }
 `;
 
@@ -681,17 +717,19 @@ function groupTrialsIntoSets(sessions, studentId, trialSize = 5) {
 }
 
 /* ── TrialTracker component ── */
-function TrialTracker({ form, setF, student, sessions }) {
+function TrialTracker({ form, setF, student, goal, sessions }) {
   const trials = form.trials || [];
-  const trialSize = student.trialSize || 5;
+  const trialSize = goal?.trialSize || student?.trialSize || 5;
 
-  // How many trials already carried over from previous sessions
+  // How many trials already carried over from previous sessions (for this specific goal)
+  const goalId = goal?.id;
   const { remainder: carryover, totalTrials: prevTotal } = useMemo(() => {
     const prevSessions = sessions.filter(s =>
-      s.studentId === student.id && s.goalData?.trials?.length > 0
+      s.studentId === student.id && s.goalData?.trials?.length > 0 &&
+      (!goalId || !s.goalData?.goalId || s.goalData.goalId === goalId)
     );
     return groupTrialsIntoSets(prevSessions, student.id, trialSize);
-  }, [sessions, student.id, trialSize]);
+  }, [sessions, student.id, trialSize, goalId]);
 
   const addTrial = (type) => setF("trials", [...trials, type]);
   const removeLast = () => setF("trials", trials.slice(0, -1));
@@ -816,13 +854,15 @@ function TrialTracker({ form, setF, student, sessions }) {
 ══════════════════════════════════════ */
 function TrackingPage({ students, groups, sessions, saveSession, saveGroupSession, deleteSession, toggleDocumented }) {
   const [trackMode, setTrackMode] = useState("individual"); // "individual" | "group"
-  const [form, setForm] = useState({ studentId:"", groupId:"", date:todayStr(), directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null });
+  const [form, setForm] = useState({ studentId:"", groupId:"", goalId:"", date:todayStr(), directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterStudent, setFilterStudent] = useState("");
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const selectedStudent = trackMode === "individual" ? students.find(s => s.id === form.studentId) : null;
+  const studentGoals = selectedStudent ? getStudentGoals(selectedStudent) : [];
+  const selectedGoal = studentGoals.find(g => g.id === form.goalId) || (studentGoals.length === 1 ? studentGoals[0] : null);
 
   const monthMinutes = useMemo(() => {
     if (trackMode !== "individual" || !form.studentId || !form.date) return null;
@@ -842,6 +882,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
       notes: form.notes,
       documented: form.documented === true,
       goalData: {
+        goalId: selectedGoal?.id || undefined,
         trials: form.trials && form.trials.length > 0 ? form.trials : undefined,
         correct: form.trials ? form.trials.filter(t => t === "C").length : (form.correct !== "" ? Number(form.correct) : undefined),
         incorrect: form.trials ? form.trials.filter(t => t === "I").length : (form.incorrect !== "" ? Number(form.incorrect) : undefined),
@@ -857,7 +898,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
     }
     setSaving(false);
     setSaved(true); setTimeout(() => setSaved(false), 2500);
-    setForm(f => ({ ...f, directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null }));
+    setForm(f => ({ ...f, directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null })); // keep studentId, goalId, date
   };
 
   const visibleSessions = useMemo(() => {
@@ -899,7 +940,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
           {trackMode === "individual" ? (
             <div className="fg">
               <label className="fl">Student</label>
-              <select className="fc" value={form.studentId} onChange={e => setF("studentId", e.target.value)}>
+              <select className="fc" value={form.studentId} onChange={e => { setF("studentId", e.target.value); setF("goalId",""); setF("trials",[]); }}>
                 <option value="">Select student...</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -923,6 +964,24 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                   </div>
                 );
               })()}
+            </div>
+          )}
+
+          {/* Goal selector — shown when student has multiple goals */}
+          {selectedStudent && studentGoals.length > 1 && (
+            <div className="fg">
+              <label className="fl">Goal</label>
+              <select className="fc" value={form.goalId} onChange={e => { setF("goalId", e.target.value); setF("trials",[]); }}>
+                <option value="">Select goal...</option>
+                {studentGoals.map((g,i) => (
+                  <option key={g.id} value={g.id}>Goal {i+1}: {g.description ? (g.description.length>50?g.description.slice(0,50)+"…":g.description) : g.goalType}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {selectedStudent && studentGoals.length === 0 && (
+            <div style={{ fontSize:12.5, color:"var(--ora)", padding:"8px 11px", background:"#fef6cd", borderRadius:8, marginBottom:10 }}>
+              ⚠ No goals set for this student. Add goals in Manage Students.
             </div>
           )}
 
@@ -954,42 +1013,43 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
             <>
               <div className="div" />
               <div className="sec">Goal Tracking</div>
-              {selectedStudent.iepGoal && (
+              {selectedGoal?.description && (
                 <div style={{ fontSize:12.5, color:"#547060", padding:"8px 11px", background:"#edf4f0", borderRadius:8, marginBottom:11, lineHeight:1.55 }}>
-                  🎯 {selectedStudent.iepGoal}
+                  🎯 {selectedGoal.description}
                 </div>
               )}
-              {selectedStudent.goalType === "trials" && (
+              {selectedGoal?.goalType === "trials" && (
                 <TrialTracker
                   form={form}
                   setF={setF}
                   student={selectedStudent}
+                  goal={selectedGoal}
                   sessions={sessions}
                 />
               )}
-              {selectedStudent.goalType === "rubric" && selectedStudent.rubricLevels?.length > 0 && (
+              {selectedGoal?.goalType === "rubric" && (selectedGoal?.rubricLevels||[]).length > 0 && (
                 <div className="fg">
                   <label className="fl">📊 Rubric Score</label>
                   <select className="fc" value={form.rubricScore} onChange={e => setF("rubricScore", e.target.value)}>
                     <option value="">Select a level...</option>
-                    {selectedStudent.rubricLevels.map((lvl, i) => (
+                    {(selectedGoal?.rubricLevels||[]).map((lvl, i) => (
                       <option key={i} value={lvl}>{lvl}</option>
                     ))}
                   </select>
                 </div>
               )}
-              {selectedStudent.goalType === "pm" && (
+              {selectedGoal?.goalType === "pm" && (
                 <div className="fg">
                   <label className="fl">📏 Progress Monitoring Score</label>
                   <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                     <input type="number" className="fc" placeholder="Enter score..." value={form.pmScore||""} onChange={e => setF("pmScore", e.target.value)} style={{ flex:1 }} />
                     {form.pmScore && <span style={{ fontSize:28, fontWeight:700, fontFamily:"Lora,serif", color:"var(--pri)", minWidth:60, textAlign:"center" }}>{form.pmScore}</span>}
                   </div>
-                  {selectedStudent.pmGoalScore && (
+                  {selectedGoal?.pmGoalScore && (
                     <div style={{ fontSize:12, color:"var(--txt2)", marginTop:5 }}>
-                      Goal score: <strong>{selectedStudent.pmGoalScore}</strong>
-                      {form.pmScore && <span style={{ marginLeft:8, color: Number(form.pmScore) >= Number(selectedStudent.pmGoalScore) ? "var(--grn)" : "var(--ora)" }}>
-                        {Number(form.pmScore) >= Number(selectedStudent.pmGoalScore) ? "✅ Goal met!" : `${(Number(selectedStudent.pmGoalScore) - Number(form.pmScore)).toFixed(1)} away from goal`}
+                      Goal score: <strong>{selectedGoal.pmGoalScore}</strong>
+                      {form.pmScore && <span style={{ marginLeft:8, color: Number(form.pmScore) >= Number(selectedGoal.pmGoalScore) ? "var(--grn)" : "var(--ora)" }}>
+                        {Number(form.pmScore) >= Number(selectedGoal.pmGoalScore) ? "✅ Goal met!" : `${(Number(selectedGoal.pmGoalScore) - Number(form.pmScore)).toFixed(1)} away from goal`}
                       </span>}
                     </div>
                   )}
@@ -1035,7 +1095,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
               </div>
             )}
           </div>
-          <button className="btn btn-p" style={{ width:"100%", justifyContent:"center", marginTop:6 }} onClick={handleSubmit} disabled={(trackMode==="individual" ? !form.studentId : !form.groupId) || saving}>
+          <button className="btn btn-p" style={{ width:"100%", justifyContent:"center", marginTop:6 }} onClick={handleSubmit} disabled={(trackMode==="individual" ? (!form.studentId || (studentGoals.length>1 && !form.goalId)) : !form.groupId) || saving}>
             {saving ? "Saving…" : "＋ Log Session"}
           </button>
         </div>
@@ -1060,7 +1120,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
         {visibleSessions.length === 0 ? (
           <div className="empty"><div className="empty-i">📋</div><p>No sessions logged yet.</p></div>
         ) : (
-          <div style={{ overflowX:"auto" }}>
+          <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr>
                 <th>Student</th><th>Date</th><th>Direct</th><th>Indirect</th><th>Goal Data</th><th>Notes</th><th>Documented</th><th></th>
@@ -1143,15 +1203,17 @@ function ServicesPage({ students, sessions }) {
 
       {/* 8-week PM reminders */}
       {(() => {
-        const pmStudents = students.filter(s => s.goalType === "pm");
+        const pmStudents = students.filter(s => getStudentGoals(s).some(g => g.goalType === "pm"));
+        const getPmGoal = (s) => getStudentGoals(s).find(g => g.goalType === "pm");
         const overdue = pmStudents.filter(s => {
-          if (!s.lastPmDate) return true;
-          const days = Math.round((new Date() - new Date(s.lastPmDate + "T00:00:00")) / 86400000);
+          const g = getPmGoal(s); if (!g) return false;
+          if (!g.lastPmDate) return true;
+          const days = Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000);
           return days >= 56;
         });
         const dueSoon = pmStudents.filter(s => {
-          if (!s.lastPmDate) return false;
-          const days = Math.round((new Date() - new Date(s.lastPmDate + "T00:00:00")) / 86400000);
+          const g = getPmGoal(s); if (!g || !g.lastPmDate) return false;
+          const days = Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000);
           return days >= 49 && days < 56;
         });
         if (overdue.length === 0 && dueSoon.length === 0) return null;
@@ -1162,7 +1224,8 @@ function ServicesPage({ students, sessions }) {
                 <div style={{ fontWeight:600, color:"var(--red)", marginBottom:6, fontSize:13 }}>🔴 Progress Monitoring Overdue (8+ weeks)</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {overdue.map(s => {
-                    const days = s.lastPmDate ? Math.round((new Date() - new Date(s.lastPmDate + "T00:00:00")) / 86400000) : null;
+                    const g = getPmGoal(s);
+                    const days = g?.lastPmDate ? Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000) : null;
                     return <span key={s.id} className="bdg bdg-rd">{s.name}{days ? ` — ${days}d ago` : " — never monitored"}</span>;
                   })}
                 </div>
@@ -1173,7 +1236,8 @@ function ServicesPage({ students, sessions }) {
                 <div style={{ fontWeight:600, color:"var(--yel)", marginBottom:6, fontSize:13 }}>🟡 Progress Monitoring Due Soon (within 1 week)</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {dueSoon.map(s => {
-                    const days = Math.round((new Date() - new Date(s.lastPmDate + "T00:00:00")) / 86400000);
+                    const g = getPmGoal(s);
+                    const days = g?.lastPmDate ? Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000) : 0;
                     return <span key={s.id} className="bdg bdg-y">{s.name} — {days}d ago</span>;
                   })}
                 </div>
@@ -1221,7 +1285,7 @@ function ServicesPage({ students, sessions }) {
         {data.length === 0 ? (
           <div className="empty"><div className="empty-i">⏱️</div><p>No students yet.</p></div>
         ) : (
-          <div style={{ overflowX:"auto" }}>
+          <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr>
                 <th>Student</th>
@@ -1425,7 +1489,7 @@ function MeetingsPage({ students, saveStudent }) {
         {upcoming.length === 0 ? (
           <div className="empty"><div className="empty-i">📅</div><p>No upcoming meetings.<br />Add students with meeting dates in Manage.</p></div>
         ) : (
-          <div style={{ overflowX:"auto" }}>
+          <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr><th>Student</th><th>Type</th><th>Due Date</th><th>Days Until Due</th><th>Scheduled Date</th><th>Actions</th></tr></thead>
               <tbody>
@@ -1454,7 +1518,7 @@ function MeetingsPage({ students, saveStudent }) {
       {completed.length > 0 && (
         <div className="card">
           <div className="ch"><span className="ct" style={{ color:"var(--txt2)" }}>Completed Meetings</span></div>
-          <div style={{ overflowX:"auto" }}>
+          <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr><th>Student</th><th>Type</th><th>Due Date</th><th>Scheduled</th><th></th></tr></thead>
               <tbody>
@@ -1497,7 +1561,10 @@ function MeetingsPage({ students, saveStudent }) {
    MANAGE PAGE
 ══════════════════════════════════════ */
 function defaultForm() {
-  return { name:"", grade:"", directMinutesPerMonth:"", indirectMinutesPerMonth:"", iepGoal:"", goalType:"trials", trialSize:5, rubricLevels:[], pmGoalScore:"", lastPmDate:"", meetingType:"Annual", meetingDueDate:"", meetingScheduledDate:"" };
+  return { name:"", grade:"", directMinutesPerMonth:"", indirectMinutesPerMonth:"", goals:[], meetingType:"Annual", meetingDueDate:"", meetingScheduledDate:"" };
+}
+function defaultGoalForm() {
+  return { id:"", description:"", goalType:"trials", trialSize:5, rubricLevels:[], pmGoalScore:"", lastPmDate:"" };
 }
 
 function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, allStudents }) {
@@ -1514,26 +1581,47 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
   const [savingGroup, setSavingGroup] = useState(false);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const openAdd = () => { setEditId(null); setForm(defaultForm()); setRubricIn(""); setShowModal(true); };
+  const openAdd = () => { setEditId(null); setForm(defaultForm()); setShowModal(true); };
   const openEdit = (s) => {
     setEditId(s.id);
-    setForm({ name:s.name||"", grade:s.grade||"", directMinutesPerMonth:s.directMinutesPerMonth||"", indirectMinutesPerMonth:s.indirectMinutesPerMonth||"", iepGoal:s.iepGoal||"", goalType:s.goalType||"trials", trialSize:s.trialSize||5, rubricLevels:s.rubricLevels||[], pmGoalScore:s.pmGoalScore||"", lastPmDate:s.lastPmDate||"", meetingType:s.meetingType||"Annual", meetingDueDate:s.meetingDueDate||"", meetingScheduledDate:s.meetingScheduledDate||"" });
-    setRubricIn(""); setShowModal(true);
+    // migrate legacy single-goal to goals array
+    const goals = getStudentGoals(s);
+    setForm({ name:s.name||"", grade:s.grade||"", directMinutesPerMonth:s.directMinutesPerMonth||"", indirectMinutesPerMonth:s.indirectMinutesPerMonth||"", goals, meetingType:s.meetingType||"Annual", meetingDueDate:s.meetingDueDate||"", meetingScheduledDate:s.meetingScheduledDate||"" });
+    setShowModal(true);
   };
   const handleSave = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     const base = editId ? students.find(s => s.id === editId) : { id:uid(), meetingCompleted:false };
-    const student = { ...base, ...form, directMinutesPerMonth:Number(form.directMinutesPerMonth)||0, indirectMinutesPerMonth:Number(form.indirectMinutesPerMonth)||0 };
+    const student = { ...base, name:form.name, grade:form.grade, directMinutesPerMonth:Number(form.directMinutesPerMonth)||0, indirectMinutesPerMonth:Number(form.indirectMinutesPerMonth)||0, goals:form.goals, meetingType:form.meetingType, meetingDueDate:form.meetingDueDate, meetingScheduledDate:form.meetingScheduledDate };
     await saveStudent(student);
     setSaving(false);
     setShowModal(false);
   };
-  const addRubric = () => {
+
+  // Inline goal editing inside modal
+  const [editingGoal, setEditingGoal] = useState(null); // null = not editing, or goal object
+  const [goalForm, setGF2] = useState(defaultGoalForm());
+  const [rubricIn, setRubricIn] = useState("");
+  const openAddGoal = () => { setEditingGoal("new"); setGF2({ ...defaultGoalForm(), id: uid() }); setRubricIn(""); };
+  const openEditGoal = (g) => { setEditingGoal(g.id); setGF2({ ...g }); setRubricIn(""); };
+  const saveGoal = () => {
+    if (!goalForm.description.trim() && !goalForm.goalType) return;
+    const existing = form.goals || [];
+    if (editingGoal === "new") {
+      setF("goals", [...existing, goalForm]);
+    } else {
+      setF("goals", existing.map(g => g.id === editingGoal ? goalForm : g));
+    }
+    setEditingGoal(null);
+  };
+  const deleteGoal = (id) => setF("goals", (form.goals||[]).filter(g => g.id !== id));
+  const addRubric2 = () => {
     if (!rubricIn.trim()) return;
-    setF("rubricLevels", [...(form.rubricLevels||[]), rubricIn.trim()]);
+    setGF2(f => ({ ...f, rubricLevels: [...(f.rubricLevels||[]), rubricIn.trim()] }));
     setRubricIn("");
   };
+
 
   const openAddGroup = () => { setEditGroupId(null); setGroupForm({ name:"", memberIds:[] }); setShowGroupModal(true); };
   const openEditGroup = (g) => { setEditGroupId(g.id); setGroupForm({ name:g.name||"", memberIds:g.memberIds||[] }); setShowGroupModal(true); };
@@ -1583,7 +1671,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
         {students.length === 0 ? (
           <div className="empty"><div className="empty-i">👥</div><p>No students yet.<br />Click "Add Student" to get started.</p></div>
         ) : (
-          <div style={{ overflowX:"auto" }}>
+          <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr>
                 <th>Name</th><th>Grade</th><th>Direct/Mo</th><th>Indirect/Mo</th><th>Goal Type</th><th>IEP Goal</th><th>Meeting Type</th><th>Due Date</th><th>Sessions</th><th>Actions</th>
@@ -1598,8 +1686,8 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                       <td>{s.grade||"—"}</td>
                       <td><strong>{s.directMinutesPerMonth}</strong>m</td>
                       <td><strong>{s.indirectMinutesPerMonth}</strong>m</td>
-                      <td><span className={`bdg ${s.goalType==="rubric"?"bdg-r":s.goalType==="pm"?"bdg-n":"bdg-a"}`}>{s.goalType==="rubric"?"📊 Rubric":s.goalType==="pm"?"📏 PM":"🔢 Trials"}</span></td>
-                      <td style={{ maxWidth:180, fontSize:12, color:"var(--txt2)" }}>{s.iepGoal?(s.iepGoal.length>55?s.iepGoal.slice(0,55)+"…":s.iepGoal):"—"}</td>
+                      <td>{(() => { const gs = getStudentGoals(s); return gs.length===0 ? <span className="muted sm">No goals</span> : gs.length===1 ? <span className={`bdg ${gs[0].goalType==="rubric"?"bdg-r":gs[0].goalType==="pm"?"bdg-n":"bdg-a"}`}>{gs[0].goalType==="rubric"?"📊 Rubric":gs[0].goalType==="pm"?"📏 PM":"🔢 Trials"}</span> : <span className="bdg bdg-a">{gs.length} goals</span>; })()}</td>
+                      <td style={{ maxWidth:180, fontSize:12, color:"var(--txt2)" }}>{(() => { const gs = getStudentGoals(s); return gs.length>0?(gs[0].description||"—"):"—"; })()}</td>
                       <td><span className={`bdg ${s.meetingType==="Annual"?"bdg-a":"bdg-r"}`}>{s.meetingType||"Annual"}</span></td>
                       <td><span style={{ color:urgent?"var(--red)":"var(--txt)", fontWeight:urgent?600:400 }}>{s.meetingDueDate||"—"}{s.meetingCompleted&&<span className="bdg bdg-g" style={{ marginLeft:4 }}>Done</span>}</span></td>
                       <td><span className="bdg bdg-n">{sessions.filter(x=>x.studentId===s.id).length}</span></td>
@@ -1623,7 +1711,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
           {groups.length === 0 ? (
             <div className="empty"><div className="empty-i">👥</div><p>No groups yet.<br />Click "Add Group" to create one.</p></div>
           ) : (
-            <div style={{ overflowX:"auto" }}>
+            <div className="tbl-wrap">
               <table className="tbl">
                 <thead><tr>
                   <th>Group Name</th><th>Members</th><th>Sessions</th><th>Actions</th>
@@ -1743,54 +1831,89 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                 </div>
               </div>
               <div className="div" />
-              <div className="sec">IEP Goal</div>
-              <div className="fg">
-                <label className="fl">Goal Description</label>
-                <textarea className="fc" placeholder="Describe the student's IEP goal..." value={form.iepGoal} onChange={e => setF("iepGoal", e.target.value)} />
+              <div className="sec" style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <span>IEP Goals ({(form.goals||[]).length})</span>
+                <button className="btn btn-o btn-sm" onClick={openAddGoal} style={{ fontSize:12 }}>＋ Add Goal</button>
               </div>
-              <div className="fg">
-                <label className="fl">Goal Tracking Method</label>
-                <div className="pill-wrap">
-                  <button className={`pill ${form.goalType==="trials"?"sel":""}`} onClick={() => setF("goalType","trials")}>🔢 Trials</button>
-                  <button className={`pill ${form.goalType==="rubric"?"sel":""}`} onClick={() => setF("goalType","rubric")}>📊 Rubric</button>
-                  <button className={`pill ${form.goalType==="pm"?"sel":""}`} onClick={() => setF("goalType","pm")}>📏 Progress Monitoring</button>
-                </div>
-              </div>
-              {form.goalType === "trials" && (
-                <div className="fg">
-                  <label className="fl">Trials per Set</label>
-                  <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                    {[3,4,5,6,8,10].map(n => (
-                      <button key={n} className={`pill ${Number(form.trialSize)===n?"sel":""}`} onClick={() => setF("trialSize", n)}>{n}</button>
-                    ))}
-                  </div>
-                  <div style={{ fontSize:11, color:"var(--txt2)", marginTop:5 }}>Trials are grouped into sets of {form.trialSize||5} across sessions for charting</div>
-                </div>
+
+              {/* Goal list */}
+              {(form.goals||[]).length === 0 && (
+                <div style={{ fontSize:13, color:"var(--txt2)", padding:"10px 0", marginBottom:8 }}>No goals yet — click "Add Goal" to add one.</div>
               )}
-              {form.goalType === "rubric" && (
-                <div className="fg">
-                  <label className="fl">Define Rubric Levels</label>
-                  <div className="tags">
-                    {(form.rubricLevels||[]).map((l,i) => (
-                      <span key={i} className="tag">{l}<span className="tag-x" onClick={() => setF("rubricLevels", form.rubricLevels.filter((_,j)=>j!==i))}>×</span></span>
-                    ))}
-                  </div>
-                  <div style={{ display:"flex", gap:7 }}>
-                    <input className="fc" style={{ flex:1 }} placeholder='e.g. "1 - Beginning"' value={rubricIn} onChange={e => setRubricIn(e.target.value)} onKeyDown={e => e.key==="Enter"&&addRubric()} />
-                    <button className="btn btn-o" onClick={addRubric}>Add</button>
+              {(form.goals||[]).map((g, gi) => (
+                <div key={g.id} style={{ background:"var(--inp)", borderRadius:9, padding:"10px 13px", marginBottom:8, border:"1.5px solid var(--bdr)" }}>
+                  <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:"var(--pri)", marginBottom:3 }}>
+                        Goal {gi+1} · <span style={{ color:"var(--txt2)" }}>{g.goalType==="trials"?"🔢 Trials":g.goalType==="rubric"?"📊 Rubric":"📏 PM"}{g.goalType==="trials"?` (${g.trialSize||5}/set)`:""}</span>
+                      </div>
+                      <div style={{ fontSize:13, color:"var(--txt)", lineHeight:1.4 }}>{g.description || <span className="muted">No description</span>}</div>
+                    </div>
+                    <div style={{ display:"flex", gap:5, flexShrink:0 }}>
+                      <button className="btn btn-o btn-sm" onClick={() => openEditGoal(g)}>Edit</button>
+                      <button className="btn btn-d btn-sm" onClick={() => deleteGoal(g.id)}>✕</button>
+                    </div>
                   </div>
                 </div>
-              )}
-              {form.goalType === "pm" && (
-                <div className="fr">
-                  <div className="fg">
-                    <label className="fl">Goal Score (target)</label>
-                    <input type="number" className="fc" placeholder="e.g. 100" value={form.pmGoalScore} onChange={e => setF("pmGoalScore", e.target.value)} />
+              ))}
+
+              {/* Inline goal editor */}
+              {editingGoal && (
+                <div style={{ background:"#fff", border:"2px solid var(--pri)", borderRadius:11, padding:"14px 15px", marginBottom:10 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--pri)", marginBottom:12, textTransform:"uppercase", letterSpacing:".05em" }}>
+                    {editingGoal==="new" ? "New Goal" : "Edit Goal"}
                   </div>
                   <div className="fg">
-                    <label className="fl">Last PM Date</label>
-                    <input type="date" className="fc" value={form.lastPmDate} onChange={e => setF("lastPmDate", e.target.value)} />
-                    <div style={{ fontSize:11, color:"var(--txt2)", marginTop:4 }}>Used for 8-week reminder</div>
+                    <label className="fl">Goal Description</label>
+                    <textarea className="fc" rows={2} placeholder="Describe the IEP goal..." value={goalForm.description} onChange={e => setGF2(f=>({...f,description:e.target.value}))} />
+                  </div>
+                  <div className="fg">
+                    <label className="fl">Tracking Method</label>
+                    <div className="pill-wrap">
+                      {[["trials","🔢 Trials"],["rubric","📊 Rubric"],["pm","📏 PM"]].map(([t,lbl]) => (
+                        <button key={t} className={`pill ${goalForm.goalType===t?"sel":""}`} onClick={() => setGF2(f=>({...f,goalType:t}))}>{lbl}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {goalForm.goalType==="trials" && (
+                    <div className="fg">
+                      <label className="fl">Trials per Set</label>
+                      <div className="pill-wrap">
+                        {[3,4,5,6,8,10].map(n=>(
+                          <button key={n} className={`pill ${Number(goalForm.trialSize)===n?"sel":""}`} onClick={()=>setGF2(f=>({...f,trialSize:n}))}>{n}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {goalForm.goalType==="rubric" && (
+                    <div className="fg">
+                      <label className="fl">Rubric Levels</label>
+                      <div className="tags">
+                        {(goalForm.rubricLevels||[]).map((l,i)=>(
+                          <span key={i} className="tag">{l}<span className="tag-x" onClick={()=>setGF2(f=>({...f,rubricLevels:f.rubricLevels.filter((_,j)=>j!==i)}))}>×</span></span>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",gap:7}}>
+                        <input className="fc" style={{flex:1}} placeholder='e.g. "1 - Beginning"' value={rubricIn} onChange={e=>setRubricIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addRubric2()} />
+                        <button className="btn btn-o" onClick={addRubric2}>Add</button>
+                      </div>
+                    </div>
+                  )}
+                  {goalForm.goalType==="pm" && (
+                    <div className="fr">
+                      <div className="fg">
+                        <label className="fl">Goal Score</label>
+                        <input type="number" className="fc" placeholder="e.g. 100" value={goalForm.pmGoalScore} onChange={e=>setGF2(f=>({...f,pmGoalScore:e.target.value}))} />
+                      </div>
+                      <div className="fg">
+                        <label className="fl">Last PM Date</label>
+                        <input type="date" className="fc" value={goalForm.lastPmDate} onChange={e=>setGF2(f=>({...f,lastPmDate:e.target.value}))} />
+                      </div>
+                    </div>
+                  )}
+                  <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
+                    <button className="btn btn-g btn-sm" onClick={()=>setEditingGoal(null)}>Cancel</button>
+                    <button className="btn btn-p btn-sm" onClick={saveGoal}>Save Goal</button>
                   </div>
                 </div>
               )}
@@ -1832,24 +1955,43 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
 ══════════════════════════════════════ */
 function GoalProgressPage({ students, sessions }) {
   const [selStudent, setSelStudent] = useState("");
+  const [selGoalId, setSelGoalId] = useState("");
 
   const student = students.find(s => s.id === selStudent);
+  const studentGoals = student ? getStudentGoals(student) : [];
+  const selectedGoal = studentGoals.find(g => g.id === selGoalId) || (studentGoals.length === 1 ? studentGoals[0] : null);
+
+  // When student changes, auto-select first goal
+  const prevStudent = useMemo(() => selStudent, [selStudent]);
+  useEffect(() => {
+    if (studentGoals.length === 1) setSelGoalId(studentGoals[0].id);
+    else setSelGoalId("");
+  }, [selStudent]);
 
   const studentSessions = useMemo(() => {
-    if (!selStudent) return [];
+    if (!selStudent || !selectedGoal) return [];
     return sessions
-      .filter(s => s.studentId === selStudent && s.goalData && (s.goalData.correct !== undefined || s.goalData.rubricScore || s.goalData.pmScore !== undefined))
+      .filter(s => {
+        if (s.studentId !== selStudent) return false;
+        if (!s.goalData) return false;
+        // Match by goalId if present, otherwise match legacy sessions to any goal
+        if (s.goalData.goalId) return s.goalData.goalId === selectedGoal.id;
+        // Legacy: no goalId — match if this is the first/only goal
+        const goals = getStudentGoals(student);
+        return goals.indexOf(selectedGoal) === 0;
+      })
+      .filter(s => s.goalData.correct !== undefined || s.goalData.rubricScore || s.goalData.pmScore !== undefined)
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [selStudent, sessions]);
+  }, [selStudent, selGoalId, sessions, selectedGoal]);
 
   // Build chart data
-  const trialSize = student?.trialSize || 5;
+  const trialSize = selectedGoal?.trialSize || 5;
 
-  // For trials: group into sets of 5 across all sessions
+  // For trials: group into sets of trialSize across all sessions
   const trialSets = useMemo(() => {
-    if (!student || student.goalType !== "trials") return [];
+    if (!selectedGoal || selectedGoal.goalType !== "trials") return [];
     return groupTrialsIntoSets(studentSessions, student.id, trialSize).sets;
-  }, [studentSessions, student, trialSize]);
+  }, [studentSessions, selectedGoal, trialSize]);
 
   const chartData = useMemo(() => {
     if (!student) return [];
@@ -1880,18 +2022,18 @@ function GoalProgressPage({ students, sessions }) {
       }
       return { date: s.date, value, label, session: s };
     }).filter(d => d.value !== null);
-  }, [student, studentSessions, trialSets]);
+  }, [selectedGoal, studentSessions, trialSets]);
 
   // SVG chart dimensions
   const W = 600, H = 220, PAD = { top: 20, right: 20, bottom: 40, left: 48 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
 
-  const isTrials = student?.goalType === "trials";
-  const isRubric = student?.goalType === "rubric";
-  const isPM     = student?.goalType === "pm";
+  const isTrials = selectedGoal?.goalType === "trials";
+  const isRubric = selectedGoal?.goalType === "rubric";
+  const isPM     = selectedGoal?.goalType === "pm";
 
-  const maxVal = isTrials ? 100 : Math.max(...chartData.map(d => d.value), Number(student?.pmGoalScore)||10, 4);
+  const maxVal = isTrials ? 100 : Math.max(...(chartData.length ? chartData.map(d => d.value) : [0]), Number(selectedGoal?.pmGoalScore)||10, 4);
   const minVal = 0;
 
   const xScale = (i) => chartData.length < 2 ? chartW / 2 : (i / (chartData.length - 1)) * chartW;
@@ -1925,39 +2067,53 @@ function GoalProgressPage({ students, sessions }) {
 
   return (
     <div>
-      {/* Student selector */}
-      <div style={{ marginBottom: 20 }}>
-        <div className="fg" style={{ maxWidth: 300, marginBottom: 0 }}>
+      {/* Student + Goal selector */}
+      <div style={{ marginBottom: 20, display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
+        <div className="fg" style={{ minWidth:200, flex:1, marginBottom: 0 }}>
           <label className="fl">Select Student</label>
-          <select className="fc" value={selStudent} onChange={e => setSelStudent(e.target.value)}>
+          <select className="fc" value={selStudent} onChange={e => { setSelStudent(e.target.value); }}>
             <option value="">Choose a student...</option>
             {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
+        {student && studentGoals.length > 1 && (
+          <div className="fg" style={{ minWidth:200, flex:1, marginBottom:0 }}>
+            <label className="fl">Select Goal</label>
+            <select className="fc" value={selGoalId} onChange={e => setSelGoalId(e.target.value)}>
+              <option value="">Choose a goal...</option>
+              {studentGoals.map((g,i) => (
+                <option key={g.id} value={g.id}>Goal {i+1}: {g.description?(g.description.length>40?g.description.slice(0,40)+"…":g.description):g.goalType}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
+      {selStudent && student && !selectedGoal && studentGoals.length > 1 && (
+        <div className="empty"><div className="empty-i">🎯</div><p>Select a goal above to view the progress chart.</p></div>
+      )}
       {!selStudent && (
-        <div className="empty"><div className="empty-i">📈</div><p>Select a student above to view their goal progress chart.</p></div>
+        <div className="empty"><div className="empty-i">📈</div><p>Select a student{student && studentGoals.length > 1 ? " and goal" : ""} above to view their goal progress chart.</p></div>
       )}
 
-      {selStudent && student && (
+      {selStudent && student && selectedGoal && (
         <>
           {/* Goal info card */}
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="ch">
-              <span className="ct">{student.name} — Goal Overview</span>
-              <span className={`bdg ${isRubric ? "bdg-r" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : "🔢 Trials"}</span>
+              <span className="ct">{student.name} — {selectedGoal ? (selectedGoal.description ? (selectedGoal.description.length>35?selectedGoal.description.slice(0,35)+"…":selectedGoal.description) : "Goal") : "Goal"}</span>
+              <span className={`bdg ${isRubric ? "bdg-r" : isPM ? "bdg-n" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : isPM ? "📏 PM" : "🔢 Trials"}</span>
             </div>
             <div className="cb" style={{ paddingBottom: 14 }}>
-              {student.iepGoal ? (
+              {selectedGoal?.description ? (
                 <div style={{ fontSize: 13.5, color: "var(--txt)", lineHeight: 1.65, padding: "10px 14px", background: "var(--inp)", borderRadius: 9, marginBottom: 14 }}>
-                  🎯 <strong>IEP Goal:</strong> {student.iepGoal}
+                  🎯 <strong>IEP Goal:</strong> {selectedGoal.description}
                 </div>
               ) : (
                 <div style={{ color: "var(--txt2)", fontSize: 13, marginBottom: 14 }}>No goal description set. Add one in Manage Students.</div>
               )}
               {isTrials && (() => {
-                const { remainder, totalTrials } = groupTrialsIntoSets(studentSessions, student.id, trialSize);
+                const { remainder, totalTrials } = groupTrialsIntoSets(studentSessions, student?.id, trialSize);
                 return remainder > 0 ? (
                   <div style={{ fontSize:12.5, color:"var(--txt2)", background:"var(--inp)", borderRadius:8, padding:"7px 12px", marginBottom:12, display:"flex", gap:6 }}>
                     <span>↩</span>
@@ -1969,7 +2125,7 @@ function GoalProgressPage({ students, sessions }) {
               {/* Stats row */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                 <div className="sc">
-                  <div className="sl">{isTrials ? "5-Trial Sets" : "Sessions w/ Data"}</div>
+                  <div className="sl">{isTrials ? `${trialSize}-Trial Sets` : "Sessions w/ Data"}</div>
                   <div className="sv">{isTrials ? trialSets.length : chartData.length}</div>
                 </div>
                 <div className="sc">
@@ -2028,10 +2184,10 @@ function GoalProgressPage({ students, sessions }) {
                           <text x={chartW + 4} y={yScale(80) + 4} fontSize="10" fill="#2d7d5e" opacity="0.7">80% goal</text>
                         </g>
                       )}
-                      {isPM && student?.pmGoalScore && (
+                      {isPM && selectedGoal?.pmGoalScore && (
                         <g>
-                          <line x1={0} y1={yScale(Number(student.pmGoalScore))} x2={chartW} y2={yScale(Number(student.pmGoalScore))} stroke="#2d7d5e" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.5" />
-                          <text x={chartW + 4} y={yScale(Number(student.pmGoalScore)) + 4} fontSize="10" fill="#2d7d5e" opacity="0.7">Goal: {student.pmGoalScore}</text>
+                          <line x1={0} y1={yScale(Number(selectedGoal.pmGoalScore))} x2={chartW} y2={yScale(Number(selectedGoal.pmGoalScore))} stroke="#2d7d5e" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.5" />
+                          <text x={chartW + 4} y={yScale(Number(selectedGoal.pmGoalScore)) + 4} fontSize="10" fill="#2d7d5e" opacity="0.7">Goal: {selectedGoal.pmGoalScore}</text>
                         </g>
                       )}
 
@@ -2062,9 +2218,9 @@ function GoalProgressPage({ students, sessions }) {
                           <text x={xScale(i)} y={yScale(d.value) - 10} textAnchor="middle" fontSize="10" fontWeight="600" fill="#2d7d5e">
                             {isTrials ? `${d.value}%` : d.value}
                           </text>
-                          {isPM && student?.pmGoalScore && (
+                          {isPM && selectedGoal?.pmGoalScore && (
                             <circle cx={xScale(i)} cy={yScale(d.value)} r="5"
-                              fill={Number(d.value) >= Number(student.pmGoalScore) ? "#1f6e4a" : "#fff"}
+                              fill={Number(d.value) >= Number(selectedGoal?.pmGoalScore) ? "#1f6e4a" : "#fff"}
                               stroke="#2d7d5e" strokeWidth="2.5" />
                           )}
                         </g>
@@ -2078,11 +2234,11 @@ function GoalProgressPage({ students, sessions }) {
 
           {/* Session data table */}
           <div className="card">
-            <div className="ch"><span className="ct">Session Data</span><span className="sm muted">All sessions for {student.name}</span></div>
+            <div className="ch"><span className="ct">Session Data</span><span className="sm muted">{selectedGoal?.description ? (selectedGoal.description.length>30?selectedGoal.description.slice(0,30)+"…":selectedGoal.description) : student.name}</span></div>
             {allSessions.length === 0 ? (
               <div className="empty"><div className="empty-i">📋</div><p>No sessions logged yet.</p></div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
+              <div className="tbl-wrap">
                 <table className="tbl">
                   <thead><tr>
                     <th>Date</th>
@@ -2100,7 +2256,7 @@ function GoalProgressPage({ students, sessions }) {
                       const trialsCorrect = trialArr ? trialArr.filter(t => t==="C").length : (Number(gd?.correct)||0);
                       const total = trialArr ? trialArr.length : (Number(gd?.correct) || 0) + (Number(gd?.incorrect) || 0);
                       const pct = total > 0 ? Math.round((trialsCorrect / total) * 100) : null;
-                      const metGoal = (isTrials && pct !== null && pct >= 80) || (isPM && gd?.pmScore !== undefined && student?.pmGoalScore && Number(gd.pmScore) >= Number(student.pmGoalScore));
+                      const metGoal = (isTrials && pct !== null && pct >= 80) || (isPM && gd?.pmScore !== undefined && selectedGoal?.pmGoalScore && Number(gd.pmScore) >= Number(selectedGoal.pmGoalScore));
                       return (
                         <tr key={s.id} className={metGoal ? "rg" : ""}>
                           <td style={{ whiteSpace: "nowrap", fontWeight: 500 }}>{s.date}</td>
@@ -2132,11 +2288,11 @@ function GoalProgressPage({ students, sessions }) {
                           )}
                           {isPM && (
                             <td>
-                              <span style={{ fontWeight:700, fontSize:15, color: student?.pmGoalScore && gd?.pmScore >= Number(student.pmGoalScore) ? "var(--grn)" : "var(--pri)" }}>
+                              <span style={{ fontWeight:700, fontSize:15, color: selectedGoal?.pmGoalScore && gd?.pmScore >= Number(selectedGoal.pmGoalScore) ? "var(--grn)" : "var(--pri)" }}>
                                 {gd?.pmScore ?? "—"}
                               </span>
-                              {student?.pmGoalScore && gd?.pmScore !== undefined && (
-                                <span style={{ fontSize:11, color:"var(--txt2)", marginLeft:5 }}>/ {student.pmGoalScore}</span>
+                              {selectedGoal?.pmGoalScore && gd?.pmScore !== undefined && (
+                                <span style={{ fontSize:11, color:"var(--txt2)", marginLeft:5 }}>/ {selectedGoal.pmGoalScore}</span>
                               )}
                             </td>
                           )}
