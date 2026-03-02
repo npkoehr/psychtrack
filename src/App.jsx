@@ -304,44 +304,62 @@ select.fc{cursor:pointer}
 /* ── Mobile responsive ── */
 html,body{max-width:100vw;overflow-x:hidden}
 *{touch-action:manipulation}
+/* 4-col stat grid — collapses to 2 on mobile */
+.sg4{grid-template-columns:repeat(4,1fr)!important}
 @media(max-width:768px){
   html{font-size:16px}
   .sb{display:none}
-  .main{margin-left:0;padding-bottom:76px}
-  .topbar{padding:10px 14px}
+  .app{display:block}
+  .main{margin-left:0!important;padding-bottom:76px;width:100vw;overflow-x:hidden}
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:6px}
   .topbar h2{font-size:15px}
   .topbar-r .sm{display:none}
-  .content{padding:10px;width:100%;box-sizing:border-box}
-  .btn-xl{display:none}
-  .fr{grid-template-columns:1fr}
-  .fr3{grid-template-columns:1fr}
-  .sg{grid-template-columns:repeat(2,1fr);gap:8px}
-  .sc{padding:10px 12px}
-  .sv{font-size:18px}
-  .md{max-width:100%!important;max-height:92vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0}
-  .mo{align-items:flex-end;padding:0}
-  .track-grid{grid-template-columns:1fr!important;width:100%}
-  .card{border-radius:10px}
-  .cb{padding:14px}
-  .tbl{font-size:13px}
-  .tbl th{padding:8px 9px;font-size:10px}
-  .tbl td{padding:9px 9px}
+  .content{padding:10px;width:100%;max-width:100vw;overflow-x:hidden}
+  /* Cards */
+  .card{border-radius:10px;width:100%;max-width:100%}
+  .ch{padding:12px 14px;flex-wrap:wrap;gap:6px}
+  .ct{font-size:14px}
+  .cb{padding:12px}
+  /* Forms */
   .fc{font-size:16px!important;padding:11px 12px}
   select.fc{font-size:16px!important}
-  textarea.fc{font-size:16px!important;min-height:80px}
-  .btn{font-size:14px;padding:10px 16px}
-  .btn-sm{font-size:13px;padding:8px 12px}
-  .pill{font-size:13px;padding:8px 14px}
-  .ch{padding:12px 14px}
-  .ct{font-size:14px}
+  textarea.fc{font-size:16px!important;min-height:70px}
   .fl{font-size:12px}
-  .fg{margin-bottom:14px}
-  .login-box{padding:30px 22px}
-  .mb2{padding:14px 16px}
-  .mh{padding:14px 16px 12px}
-  .mf{padding:12px 16px}
-  /* Prevent sideways scroll on tables */
-  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .fg{margin-bottom:12px}
+  .fr{grid-template-columns:1fr!important}
+  .fr3{grid-template-columns:1fr!important}
+  /* Buttons */
+  .btn{font-size:14px;padding:10px 14px}
+  .btn-sm{font-size:12px;padding:7px 11px}
+  .btn-xl{display:none}
+  /* Pills */
+  .pill{font-size:13px;padding:7px 13px}
+  /* Stats */
+  .sg{grid-template-columns:repeat(2,1fr)!important;gap:8px}
+  .sg4{grid-template-columns:repeat(2,1fr)!important}
+  .sc{padding:10px 12px}
+  .sv{font-size:17px}
+  /* Modal — slides up from bottom */
+  .mo{align-items:flex-end;padding:0}
+  .md{max-width:100%!important;max-height:92vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;width:100%!important}
+  .mb2{padding:12px 14px}
+  .mh{padding:12px 14px 10px}
+  .mf{padding:10px 14px}
+  /* Layout grids */
+  .track-grid{grid-template-columns:1fr!important;width:100%!important}
+  /* Login */
+  .login-box{padding:28px 18px}
+  /* Tables — horizontal scroll only on table itself, not page */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:calc(100vw - 20px)}
+  .tbl{font-size:12px;min-width:auto}
+  .tbl th{padding:7px 8px;font-size:10px;white-space:nowrap}
+  .tbl td{padding:8px 8px;white-space:nowrap}
+  /* Calendar fixes */
+  .cal-nav{flex-wrap:wrap;gap:6px}
+  /* Services table — hide less important cols on mobile */
+  .svc-tbl .hide-mob{display:none}
+  /* Goal progress stats 4-col → 2x2 */
+  .gp-stats{grid-template-columns:repeat(2,1fr)!important}
 }
 /* ── Bottom nav (mobile only) ── */
 .bnav{display:none}
@@ -908,7 +926,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   }, [sessions, filterStudent]);
 
   return (
-    <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start" }}>
+    <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start", width:"100%" }}>
       <div className="card">
         <div className="ch">
           <span className="ct">Log Session</span>
@@ -1260,7 +1278,7 @@ function ServicesPage({ students, sessions }) {
               {undoc.sort((a,b) => a.date.localeCompare(b.date)).map(s => {
                 const st = students.find(x => x.id === s.studentId);
                 return (
-                  <div key={s.id} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.6)", borderRadius:8, padding:"8px 12px" }}>
+                  <div key={s.id} style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,255,255,.6)", borderRadius:8, padding:"8px 10px", flexWrap:"wrap" }}>
                     <span style={{ fontSize:18, cursor:"pointer" }} onClick={() => {
                       // Mark as documented inline
                       const evt = new CustomEvent("toggleDoc", { detail: s });
@@ -1286,11 +1304,11 @@ function ServicesPage({ students, sessions }) {
           <div className="empty"><div className="empty-i">⏱️</div><p>No students yet.</p></div>
         ) : (
           <div className="tbl-wrap">
-            <table className="tbl">
+            <table className="tbl svc-tbl">
               <thead><tr>
                 <th>Student</th>
-                <th>Direct Used</th><th>Direct Left</th><th>Progress</th>
-                <th>Indirect Used</th><th>Indirect Left</th><th>Progress</th>
+                <th className="hide-mob">Direct Used</th><th>Direct Left</th><th className="hide-mob">Progress</th>
+                <th className="hide-mob">Indirect Used</th><th>Indir. Left</th><th className="hide-mob">Progress</th>
                 <th>Status</th>
               </tr></thead>
               <tbody>
@@ -1299,16 +1317,16 @@ function ServicesPage({ students, sessions }) {
                   const iPct = Math.min(100, (d.used.indirect / Math.max(1, d.indirectMinutesPerMonth)) * 100);
                   return (
                     <tr key={d.id} className={d.allMet ? "rg" : d.isOrange ? "ro" : ""}>
-                      <td><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <div style={{ fontSize:11, color:"var(--txt2)" }}>{d.grade}</div>}</td>
-                      <td>{d.used.direct}<span className="muted sm">/{d.directMinutesPerMonth}m</span></td>
+                      <td style={{ whiteSpace:"nowrap" }}><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <span className="hide-mob" style={{ fontSize:11, color:"var(--txt2)" }}> · {d.grade}</span>}</td>
+                      <td className="hide-mob">{d.used.direct}<span className="muted sm">/{d.directMinutesPerMonth}m</span></td>
                       <td><strong>{d.remD}m</strong></td>
-                      <td style={{ minWidth:90 }}>
+                      <td className="hide-mob">
                         <div className="pw"><div className="pb" style={{ width:`${dPct}%`, background:dPct>=100?"var(--grn)":"var(--pri)" }} /></div>
                         <span style={{ fontSize:10, color:"var(--txt2)" }}>{Math.round(dPct)}%</span>
                       </td>
-                      <td>{d.used.indirect}<span className="muted sm">/{d.indirectMinutesPerMonth}m</span></td>
+                      <td className="hide-mob">{d.used.indirect}<span className="muted sm">/{d.indirectMinutesPerMonth}m</span></td>
                       <td><strong>{d.remI}m</strong></td>
-                      <td style={{ minWidth:90 }}>
+                      <td>
                         <div className="pw"><div className="pb" style={{ width:`${iPct}%`, background:iPct>=100?"var(--grn)":"var(--pri)" }} /></div>
                         <span style={{ fontSize:10, color:"var(--txt2)" }}>{Math.round(iPct)}%</span>
                       </td>
@@ -1364,7 +1382,7 @@ function MeetingsPage({ students, saveStudent }) {
         <span className="bdg bdg-y">● Annual ≤30 days · Re-eval ≤75 days</span>
         <span className="bdg bdg-rd">● Annual ≤7 days · Re-eval ≤60 days</span>
       </div>
-      <div className="sg" style={{ gridTemplateColumns:"repeat(4,1fr)" }}>
+      <div className="sg sg4">
         <div className="sc"><div className="sl">Upcoming</div><div className="sv">{upcoming.length}</div></div>
         <div className="sc"><div className="sl">Urgent 🔴</div><div className="sv" style={{ color:"var(--red)" }}>{upcoming.filter(m=>m.hi==="red").length}</div></div>
         <div className="sc"><div className="sl">Soon 🟡</div><div className="sv" style={{ color:"var(--yel)" }}>{upcoming.filter(m=>m.hi==="yellow").length}</div></div>
@@ -1374,13 +1392,13 @@ function MeetingsPage({ students, saveStudent }) {
       <div className="card" style={{ marginBottom:18 }}>
         <div className="ch" style={{ flexWrap:"wrap", gap:8 }}>
           <span className="ct">📅 Calendar</span>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <div className="cal-nav" style={{ display:"flex", alignItems:"center", gap:8, flex:1, justifyContent:"flex-end" }}>
             <button className="btn btn-g btn-sm" onClick={() => {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m-2, 1);
               setCalMonth(d.toISOString().slice(0,7));
             }}>‹</button>
-            <span style={{ fontWeight:600, fontSize:13.5, minWidth:140, textAlign:"center" }}>{ymLabel(calMonth)}</span>
+            <span style={{ fontWeight:600, fontSize:13.5, textAlign:"center", flex:1 }}>{ymLabel(calMonth)}</span>
             <button className="btn btn-g btn-sm" onClick={() => {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m, 1);
@@ -1491,7 +1509,7 @@ function MeetingsPage({ students, saveStudent }) {
         ) : (
           <div className="tbl-wrap">
             <table className="tbl">
-              <thead><tr><th>Student</th><th>Type</th><th>Due Date</th><th>Days Until Due</th><th>Scheduled Date</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Student</th><th>Type</th><th>Due Date</th><th>Days</th><th className="hide-mob">Scheduled</th><th>Actions</th></tr></thead>
               <tbody>
                 {upcoming.map(m => (
                   <tr key={m.id} className={rowCls(m.hi)}>
@@ -1499,9 +1517,9 @@ function MeetingsPage({ students, saveStudent }) {
                     <td><span className={`bdg ${m.meetingType==="Annual"?"bdg-a":"bdg-r"}`}>{m.meetingType}</span></td>
                     <td>{m.meetingDueDate}</td>
                     <td><span style={{ fontWeight:600, color:m.hi==="red"?"var(--red)":m.hi==="yellow"?"#9a6800":"var(--grn)" }}>
-                      {m.days < 0 ? `⚠ ${Math.abs(m.days)}d overdue` : m.days === 0 ? "⚠ Due today" : `${m.days} days`}
+                      {m.days < 0 ? `⚠ ${Math.abs(m.days)}d` : m.days === 0 ? "⚠ Today" : `${m.days}d`}
                     </span></td>
-                    <td>{m.meetingScheduledDate ? <span style={{ color:"var(--grn)", fontWeight:500 }}>📅 {m.meetingScheduledDate}</span> : <span className="sm muted">Not set</span>}</td>
+                    <td className="hide-mob">{m.meetingScheduledDate ? <span style={{ color:"var(--grn)", fontWeight:500 }}>📅 {m.meetingScheduledDate}</span> : <span className="sm muted">—</span>}</td>
                     <td>
                       <div style={{ display:"flex", gap:6 }}>
                         <button className="btn btn-o btn-sm" onClick={() => { setSchedModal(m.id); setSchedDate(m.meetingScheduledDate||""); }}>📅 Set Date</button>
@@ -2067,8 +2085,8 @@ function GoalProgressPage({ students, sessions }) {
   return (
     <div>
       {/* Student + Goal selector */}
-      <div style={{ marginBottom: 20, display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
-        <div className="fg" style={{ minWidth:200, flex:1, marginBottom: 0 }}>
+      <div style={{ marginBottom: 16, display:"flex", gap:10, flexWrap:"wrap", alignItems:"flex-end" }}>
+        <div className="fg" style={{ flex:1, minWidth:0, marginBottom: 0 }}>
           <label className="fl">Select Student</label>
           <select className="fc" value={selStudent} onChange={e => { setSelStudent(e.target.value); }}>
             <option value="">Choose a student...</option>
@@ -2076,7 +2094,7 @@ function GoalProgressPage({ students, sessions }) {
           </select>
         </div>
         {student && studentGoals.length > 1 && (
-          <div className="fg" style={{ minWidth:200, flex:1, marginBottom:0 }}>
+          <div className="fg" style={{ flex:1, minWidth:0, marginBottom:0 }}>
             <label className="fl">Select Goal</label>
             <select className="fc" value={selGoalId} onChange={e => setSelGoalId(e.target.value)}>
               <option value="">Choose a goal...</option>
@@ -2122,7 +2140,7 @@ function GoalProgressPage({ students, sessions }) {
               })()}
 
               {/* Stats row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+              <div className="sg4 gp-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                 <div className="sc">
                   <div className="sl">{isTrials ? `${trialSize}-Trial Sets` : "Sessions w/ Data"}</div>
                   <div className="sv">{isTrials ? trialSets.length : chartData.length}</div>
@@ -2160,7 +2178,7 @@ function GoalProgressPage({ students, sessions }) {
                 </div>
               ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block", minWidth: 400 }}>
+                  <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block", minWidth: 280 }}>
                     <defs>
                       <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#2d7d5e" stopOpacity="0.18" />
