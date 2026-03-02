@@ -1572,7 +1572,6 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(defaultForm());
-  const [rubricIn, setRubricIn] = useState("");
   const [saving, setSaving] = useState(false);
   // Group state
   const [showGroupModal, setShowGroupModal] = useState(false);
