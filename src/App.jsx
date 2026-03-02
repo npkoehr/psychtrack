@@ -1247,7 +1247,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                       )}
                     </React.Fragment>
                   );
-                })
+                })}
               </tbody>
             </table>
           </div>
