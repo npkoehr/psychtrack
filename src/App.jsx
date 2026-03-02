@@ -302,64 +302,74 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Mobile responsive ── */
-html,body{max-width:100vw;overflow-x:hidden}
-*{touch-action:manipulation}
-/* 4-col stat grid — collapses to 2 on mobile */
-.sg4{grid-template-columns:repeat(4,1fr)!important}
-@media(max-width:768px){
-  html{font-size:16px}
+html,body{max-width:100%;overflow-x:hidden}
+.sg4{grid-template-columns:repeat(4,1fr)}
+
+@media(max-width:700px){
+  /* ── Base ── */
+  body{font-size:15px}
   .sb{display:none}
   .app{display:block}
-  .main{margin-left:0!important;padding-bottom:76px;width:100vw;overflow-x:hidden}
-  .topbar{padding:10px 14px;flex-wrap:wrap;gap:6px}
-  .topbar h2{font-size:15px}
+  .main{margin-left:0;padding-bottom:72px}
+  .content{padding:12px;box-sizing:border-box;width:100%}
+  .topbar{padding:11px 14px}
+  .topbar h2{font-size:16px}
   .topbar-r .sm{display:none}
-  .content{padding:10px;width:100%;max-width:100vw;overflow-x:hidden}
-  /* Cards */
-  .card{border-radius:10px;width:100%;max-width:100%}
-  .ch{padding:12px 14px;flex-wrap:wrap;gap:6px}
-  .ct{font-size:14px}
-  .cb{padding:12px}
-  /* Forms */
-  .fc{font-size:16px!important;padding:11px 12px}
-  select.fc{font-size:16px!important}
-  textarea.fc{font-size:16px!important;min-height:70px}
-  .fl{font-size:12px}
-  .fg{margin-bottom:12px}
-  .fr{grid-template-columns:1fr!important}
-  .fr3{grid-template-columns:1fr!important}
-  /* Buttons */
-  .btn{font-size:14px;padding:10px 14px}
-  .btn-sm{font-size:12px;padding:7px 11px}
   .btn-xl{display:none}
-  /* Pills */
-  .pill{font-size:13px;padding:7px 13px}
-  /* Stats */
-  .sg{grid-template-columns:repeat(2,1fr)!important;gap:8px}
-  .sg4{grid-template-columns:repeat(2,1fr)!important}
-  .sc{padding:10px 12px}
-  .sv{font-size:17px}
-  /* Modal — slides up from bottom */
+
+  /* ── Cards ── */
+  .card{border-radius:10px}
+  .ch{padding:12px 14px;flex-wrap:wrap;gap:6px}
+  .cb{padding:14px}
+  .ct{font-size:15px}
+
+  /* ── Forms ── */
+  .fg{margin-bottom:14px}
+  .fl{font-size:12px;margin-bottom:5px}
+  .fc{font-size:16px;padding:12px 13px;border-radius:9px}
+  select.fc{font-size:16px}
+  textarea.fc{font-size:16px;min-height:72px}
+  .fr{grid-template-columns:1fr}
+  .fr3{grid-template-columns:1fr}
+
+  /* ── Buttons & pills ── */
+  .btn{font-size:14px;padding:10px 16px;border-radius:9px}
+  .btn-sm{font-size:13px;padding:8px 13px}
+  .pill{font-size:14px;padding:9px 15px}
+
+  /* ── Stats grid: 2 cols ── */
+  .sg{grid-template-columns:1fr 1fr;gap:8px}
+  .sg4{grid-template-columns:1fr 1fr}
+  .sc{padding:11px 13px}
+  .sl{font-size:11px}
+  .sv{font-size:20px}
+
+  /* ── Tracking page: single column ── */
+  .track-grid{grid-template-columns:1fr!important}
+
+  /* ── Modal: slides up from bottom ── */
   .mo{align-items:flex-end;padding:0}
-  .md{max-width:100%!important;max-height:92vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;width:100%!important}
-  .mb2{padding:12px 14px}
-  .mh{padding:12px 14px 10px}
-  .mf{padding:10px 14px}
-  /* Layout grids */
-  .track-grid{grid-template-columns:1fr!important;width:100%!important}
-  /* Login */
-  .login-box{padding:28px 18px}
-  /* Tables — horizontal scroll only on table itself, not page */
-  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:calc(100vw - 20px)}
-  .tbl{font-size:12px;min-width:auto}
-  .tbl th{padding:7px 8px;font-size:10px;white-space:nowrap}
-  .tbl td{padding:8px 8px;white-space:nowrap}
-  /* Calendar fixes */
-  .cal-nav{flex-wrap:wrap;gap:6px}
-  /* Services table — hide less important cols on mobile */
-  .svc-tbl .hide-mob{display:none}
-  /* Goal progress stats 4-col → 2x2 */
-  .gp-stats{grid-template-columns:repeat(2,1fr)!important}
+  .md{width:100%!important;max-width:100%!important;max-height:90vh;border-radius:18px 18px 0 0;
+      position:fixed;bottom:0;left:0;right:0;margin:0}
+  .mh{padding:14px 16px 12px}
+  .mb2{padding:14px 16px}
+  .mf{padding:12px 16px;gap:8px}
+
+  /* ── Tables: scroll within card, never push page ── */
+  .tbl-wrap{overflow-x:auto;width:100%}
+  .tbl{font-size:13px}
+  .tbl th{padding:8px 10px;font-size:11px;white-space:nowrap}
+  .tbl td{padding:9px 10px;white-space:nowrap}
+  .hide-mob{display:none!important}
+
+  /* ── Login ── */
+  .login-box{padding:32px 20px;border-radius:16px}
+
+  /* ── Misc ── */
+  .alert-i{font-size:13px}
+  .sec{font-size:12px}
+  .cal-nav{gap:6px}
+  .gp-stats{grid-template-columns:1fr 1fr!important}
 }
 /* ── Bottom nav (mobile only) ── */
 .bnav{display:none}
