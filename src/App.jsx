@@ -678,7 +678,7 @@ export default function App() {
           <div className="topbar">
             <h2>{titles[page]}</h2>
             <div className="topbar-r">
-              <span className="sm muted">{realStudents.length} students · {groups.length} groups · {sessions.length} sessions</span>
+              <span className="sm muted">{realStudents.filter(s=>!s.studentType||s.studentType==="IEP").length} IEP · {realStudents.filter(s=>s.studentType==="504").length} 504 · {realStudents.filter(s=>s.studentType==="GenEd").length} GenEd · {sessions.length} sessions</span>
               <button className="btn btn-xl btn-sm" onClick={() => exportToExcel(students, sessions)}>⬇️ Export Excel</button>
             </div>
           </div>
@@ -887,6 +887,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filterStudent, setFilterStudent] = useState("");
+  const [sessionSearch, setSessionSearch] = useState("");
   const [expandedSession, setExpandedSession] = useState(null);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -934,8 +935,18 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   const visibleSessions = useMemo(() => {
     let s = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
     if (filterStudent) s = s.filter(x => x.studentId === filterStudent);
-    return s.slice(0, 40);
-  }, [sessions, filterStudent]);
+    if (sessionSearch.trim()) {
+      const q = sessionSearch.toLowerCase();
+      s = s.filter(x => {
+        const st = students.find(st2 => st2.id === x.studentId);
+        return (st && st.name.toLowerCase().includes(q)) ||
+               (x.notes && x.notes.toLowerCase().includes(q)) ||
+               (x.date && x.date.includes(sessionSearch.trim())) ||
+               (x.groupName && x.groupName.toLowerCase().includes(q));
+      });
+    }
+    return s.slice(0, 60);
+  }, [sessions, filterStudent, sessionSearch, students]);
 
   return (
     <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start", width:"100%" }}>
@@ -1135,10 +1146,18 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
         <div className="ch">
           <span className="ct">Session Log</span>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <select className="fc" style={{ padding:"5px 9px", fontSize:12, width:160 }} value={filterStudent} onChange={e => setFilterStudent(e.target.value)}>
-              <option value="">All students</option>
-              {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <div style={{ position:"relative", display:"inline-flex", alignItems:"center" }}>
+              <span style={{ position:"absolute", left:9, fontSize:13, opacity:.45, pointerEvents:"none" }}>&#x1F50D;</span>
+              <input className="fc"
+                style={{ paddingLeft:30, padding:"5px 9px 5px 30px", fontSize:13, width:210 }}
+                placeholder="Search name, notes, date..."
+                value={sessionSearch}
+                onChange={e => setSessionSearch(e.target.value)} />
+            </div>
+            {sessionSearch && (
+              <button onClick={() => setSessionSearch("")}
+                style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 4px", lineHeight:1 }}>x</button>
+            )}
             <span className="sm muted">{sessions.length} total</span>
             {sessions.filter(s => !s.documented && (!filterStudent || s.studentId === filterStudent)).length > 0 && (
               <span style={{ fontSize:11, background:"#f0eaff", color:"#5b21b6", padding:"2px 8px", borderRadius:8, fontWeight:500 }}>
@@ -1262,6 +1281,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
 ══════════════════════════════════════ */
 function ServicesPage({ students, sessions }) {
   const [selMonth, setSelMonth] = useState(nowYM());
+  const [svcSearch, setSvcSearch] = useState("");
   const months = getYMOptions();
   const isCurrentMonth = selMonth === nowYM();
 
@@ -1275,13 +1295,19 @@ function ServicesPage({ students, sessions }) {
     const isOrange = isCurrentMonth && afterW1 && !allMet && ((remD / wLeft) > 30 || (remI / wLeft) > 30);
     return { ...st, used, remD, remI, allMet, isOrange };
   }), [students, sessions, selMonth, isCurrentMonth]);
+  const filteredSvcData = useMemo(() => svcSearch.trim() ? data.filter(d => d.name.toLowerCase().includes(svcSearch.toLowerCase())) : data, [data, svcSearch]);
 
   return (
     <div>
-      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:18 }}>
-        <select className="fc" style={{ width:230 }} value={selMonth} onChange={e => setSelMonth(e.target.value)}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:18, flexWrap:"wrap" }}>
+        <select className="fc" style={{ width:210, flex:"0 0 auto" }} value={selMonth} onChange={e => setSelMonth(e.target.value)}>
           {months.map(ym => <option key={ym} value={ym}>{ymLabel(ym)}{ym === nowYM() ? " (Current)" : ""}</option>)}
         </select>
+        <div style={{ position:"relative", flex:1, minWidth:150 }}>
+          <span style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)", fontSize:14, pointerEvents:"none", opacity:.5 }}>&#128269;</span>
+          <input className="fc" style={{ paddingLeft:33 }} placeholder="Search students..." value={svcSearch} onChange={e => setSvcSearch(e.target.value)} />
+        </div>
+        {svcSearch && <button onClick={() => setSvcSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, color:"var(--txt2)", padding:"0 2px", lineHeight:1 }}>x</button>}
       </div>
       <div className="sg">
         <div className="sc"><div className="sl">Total Students</div><div className="sv">{data.length}</div></div>
@@ -1388,12 +1414,12 @@ function ServicesPage({ students, sessions }) {
                 <th>Status</th>
               </tr></thead>
               <tbody>
-                {data.map(d => {
+                {filteredSvcData.length === 0 && svcSearch ? (<tr><td colSpan={8} style={{ textAlign:"center", padding:"22px", color:"var(--txt2)", fontStyle:"italic" }}>No students match your search</td></tr>) : null}{filteredSvcData.map(d => {
                   const dPct = Math.min(100, (d.used.direct / Math.max(1, d.directMinutesPerMonth)) * 100);
                   const iPct = Math.min(100, (d.used.indirect / Math.max(1, d.indirectMinutesPerMonth)) * 100);
                   return (
                     <tr key={d.id} className={d.allMet ? "rg" : d.isOrange ? "ro" : ""}>
-                      <td style={{ whiteSpace:"nowrap" }}><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <span className="hide-mob" style={{ fontSize:11, color:"var(--txt2)" }}> · {d.grade}</span>}</td>
+                      <td style={{ whiteSpace:"nowrap" }}><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <span className="hide-mob" style={{ fontSize:11, color:"var(--txt2)" }}> · {d.grade}</span>}{d.studentType && d.studentType!=="IEP" && <span className={`bdg ${d.studentType==="504"?"bdg-a":""}`} style={{ marginLeft:5, fontSize:10, ...(d.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{d.studentType}</span>}</td>
                       <td className="hide-mob">{d.used.direct}<span className="muted sm">/{d.directMinutesPerMonth}m</span></td>
                       <td><strong>{d.remD}m</strong></td>
                       <td className="hide-mob">
@@ -1655,7 +1681,7 @@ function MeetingsPage({ students, saveStudent }) {
    MANAGE PAGE
 ══════════════════════════════════════ */
 function defaultForm() {
-  return { name:"", grade:"", directMinutesPerMonth:"", indirectMinutesPerMonth:"", goals:[], meetingType:"Annual", meetingDueDate:"", meetingScheduledDate:"" };
+  return { name:"", grade:"", studentType:"IEP", directMinutesPerMonth:"", indirectMinutesPerMonth:"", goals:[], meetingType:"Annual", meetingDueDate:"", meetingScheduledDate:"" };
 }
 function defaultGoalForm() {
   return { id:"", description:"", goalType:"trials", trialSize:5, rubricLevels:[], pmGoalScore:"", lastPmDate:"" };
@@ -1663,6 +1689,9 @@ function defaultGoalForm() {
 
 function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, allStudents }) {
   const [manageTab, setManageTab] = useState("students");
+  const [manageSearch, setManageSearch] = useState("");
+  const [manageSort, setManageSort] = useState("name-az");
+  const [manageFilter, setManageFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(defaultForm());
@@ -1679,14 +1708,14 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
     setEditId(s.id);
     // migrate legacy single-goal to goals array
     const goals = getStudentGoals(s);
-    setForm({ name:s.name||"", grade:s.grade||"", directMinutesPerMonth:s.directMinutesPerMonth||"", indirectMinutesPerMonth:s.indirectMinutesPerMonth||"", goals, meetingType:s.meetingType||"Annual", meetingDueDate:s.meetingDueDate||"", meetingScheduledDate:s.meetingScheduledDate||"" });
+    setForm({ name:s.name||"", grade:s.grade||"", studentType:s.studentType||"IEP", directMinutesPerMonth:s.directMinutesPerMonth||"", indirectMinutesPerMonth:s.indirectMinutesPerMonth||"", goals, meetingType:s.meetingType||"Annual", meetingDueDate:s.meetingDueDate||"", meetingScheduledDate:s.meetingScheduledDate||"" });
     setShowModal(true);
   };
   const handleSave = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     const base = editId ? students.find(s => s.id === editId) : { id:uid(), meetingCompleted:false };
-    const student = { ...base, name:form.name, grade:form.grade, directMinutesPerMonth:Number(form.directMinutesPerMonth)||0, indirectMinutesPerMonth:Number(form.indirectMinutesPerMonth)||0, goals:form.goals, meetingType:form.meetingType, meetingDueDate:form.meetingDueDate, meetingScheduledDate:form.meetingScheduledDate };
+    const student = { ...base, name:form.name, grade:form.grade, studentType:form.studentType||"IEP", directMinutesPerMonth:form.studentType==="GenEd"?0:Number(form.directMinutesPerMonth)||0, indirectMinutesPerMonth:form.studentType==="GenEd"?0:Number(form.indirectMinutesPerMonth)||0, goals:form.studentType==="IEP"?form.goals:[], meetingType:form.meetingType, meetingDueDate:form.meetingDueDate, meetingScheduledDate:form.meetingScheduledDate };
     await saveStudent(student);
     setSaving(false);
     setShowModal(false);
@@ -1751,8 +1780,30 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
       </div>
 
       {manageTab === "students" && (
-      <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:15 }}>
-        <button className="btn btn-p" onClick={openAdd}>＋ Add Student</button>
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:15, flexWrap:"wrap" }}>
+        {/* Search */}
+        <div style={{ position:"relative", flex:"1 1 160px", minWidth:140 }}>
+          <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", fontSize:13, pointerEvents:"none", opacity:.45 }}>&#x1F50D;</span>
+          <input className="fc" style={{ paddingLeft:30 }} placeholder="Search..." value={manageSearch} onChange={e => setManageSearch(e.target.value)} />
+        </div>
+        {manageSearch && <button onClick={() => setManageSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>×</button>}
+        {/* Filter by type */}
+        <select className="fc" style={{ flex:"0 0 auto", width:"auto", minWidth:110 }} value={manageFilter} onChange={e => setManageFilter(e.target.value)}>
+          <option value="all">All Types</option>
+          <option value="IEP">IEP Only</option>
+          <option value="504">504 Only</option>
+          <option value="GenEd">Gen Ed Only</option>
+        </select>
+        {/* Sort */}
+        <select className="fc" style={{ flex:"0 0 auto", width:"auto", minWidth:160 }} value={manageSort} onChange={e => setManageSort(e.target.value)}>
+          <option value="name-az">Name A → Z</option>
+          <option value="name-za">Name Z → A</option>
+          <option value="type">By Type</option>
+          <option value="due-asc">Due Date (Soonest)</option>
+          <option value="due-desc">Due Date (Latest)</option>
+          <option value="sessions-desc">Most Sessions</option>
+        </select>
+        <button className="btn btn-p" onClick={openAdd} style={{ flex:"0 0 auto" }}>+ Add Student</button>
       </div>
       )}
       {manageTab === "groups" && (
@@ -1767,21 +1818,46 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
           <div className="tbl-wrap">
             <table className="tbl">
               <thead><tr>
-                <th>Name</th><th>Grade</th><th>Direct/Mo</th><th>Indirect/Mo</th><th>Goal Type</th><th>IEP Goal</th><th>Meeting Type</th><th>Due Date</th><th>Sessions</th><th>Actions</th>
+                <th>Name</th><th>Type</th><th>Grade</th><th>Direct/Mo</th><th>Indirect/Mo</th><th>Goal</th><th>Due Date</th><th>Sessions</th><th>Actions</th>
               </tr></thead>
               <tbody>
-                {students.map(s => {
+{(() => {
+                  const typeOrder = {"IEP":0,"504":1,"GenEd":2};
+                  let rows = students
+                    .filter(s => (!manageSearch.trim() || s.name.toLowerCase().includes(manageSearch.toLowerCase()))
+                              && (manageFilter==="all" || (s.studentType||"IEP")===manageFilter));
+                  rows = [...rows].sort((a,b) => {
+                    if (manageSort==="name-az") return a.name.localeCompare(b.name);
+                    if (manageSort==="name-za") return b.name.localeCompare(a.name);
+                    if (manageSort==="type") return (typeOrder[a.studentType||"IEP"]||0)-(typeOrder[b.studentType||"IEP"]||0);
+                    if (manageSort==="due-asc") {
+                      const da = a.meetingDueDate||"9999"; const db = b.meetingDueDate||"9999";
+                      return da.localeCompare(db);
+                    }
+                    if (manageSort==="due-desc") {
+                      const da = a.meetingDueDate||"0000"; const db = b.meetingDueDate||"0000";
+                      return db.localeCompare(da);
+                    }
+                    if (manageSort==="sessions-desc") return sessions.filter(x=>x.studentId===b.id).length - sessions.filter(x=>x.studentId===a.id).length;
+                    return 0;
+                  });
+                  if (rows.length===0) return <tr><td colSpan={9} style={{ textAlign:"center", padding:"22px", color:"var(--txt2)", fontStyle:"italic" }}>No students match your filters</td></tr>;
+                  return rows.map(s => {
                   const days = daysUntil(s.meetingDueDate);
                   const urgent = s.meetingDueDate && !s.meetingCompleted && days <= 30;
                   return (
                     <tr key={s.id}>
                       <td><strong>{s.name}</strong></td>
+                      <td>{s.studentType==="504"
+                        ? <span className="bdg bdg-a">504</span>
+                        : s.studentType==="GenEd"
+                        ? <span className="bdg" style={{ background:"#f0eaff", color:"#7c3aed" }}>GenEd</span>
+                        : <span className="bdg bdg-g">IEP</span>}
+                      </td>
                       <td>{s.grade||"—"}</td>
-                      <td><strong>{s.directMinutesPerMonth}</strong>m</td>
-                      <td><strong>{s.indirectMinutesPerMonth}</strong>m</td>
-                      <td>{(() => { const gs = getStudentGoals(s); return gs.length===0 ? <span className="muted sm">No goals</span> : gs.length===1 ? <span className={`bdg ${gs[0].goalType==="rubric"?"bdg-r":gs[0].goalType==="pm"?"bdg-n":"bdg-a"}`}>{gs[0].goalType==="rubric"?"📊 Rubric":gs[0].goalType==="pm"?"📏 PM":"🔢 Trials"}</span> : <span className="bdg bdg-a">{gs.length} goals</span>; })()}</td>
-                      <td style={{ maxWidth:180, fontSize:12, color:"var(--txt2)" }}>{(() => { const gs = getStudentGoals(s); return gs.length>0?(gs[0].description||"—"):"—"; })()}</td>
-                      <td><span className={`bdg ${s.meetingType==="Annual"?"bdg-a":"bdg-r"}`}>{s.meetingType||"Annual"}</span></td>
+                      <td>{s.studentType==="GenEd" ? <span className="muted sm">—</span> : <><strong>{s.directMinutesPerMonth}</strong>m</>}</td>
+                      <td>{s.studentType==="GenEd" ? <span className="muted sm">—</span> : <><strong>{s.indirectMinutesPerMonth}</strong>m</>}</td>
+                      <td>{s.studentType==="IEP" ? (() => { const gs = getStudentGoals(s); return gs.length===0 ? <span className="muted sm">No goals</span> : gs.length===1 ? <span className={`bdg ${gs[0].goalType==="rubric"?"bdg-r":gs[0].goalType==="pm"?"bdg-n":"bdg-a"}`}>{gs[0].goalType==="rubric"?"Rubric":gs[0].goalType==="pm"?"PM":"Trials"}</span> : <span className="bdg bdg-a">{gs.length} goals</span>; })() : <span className="muted sm">—</span>}</td>
                       <td><span style={{ color:urgent?"var(--red)":"var(--txt)", fontWeight:urgent?600:400 }}>{s.meetingDueDate||"—"}{s.meetingCompleted&&<span className="bdg bdg-g" style={{ marginLeft:4 }}>Done</span>}</span></td>
                       <td><span className="bdg bdg-n">{sessions.filter(x=>x.studentId===s.id).length}</span></td>
                       <td>
@@ -1792,7 +1868,8 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                       </td>
                     </tr>
                   );
-                })}
+                  });
+                })()}
               </tbody>
             </table>
           </div>
@@ -1900,6 +1977,27 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
               <button className="xbtn" onClick={() => setShowModal(false)}>×</button>
             </div>
             <div className="mb2">
+              {/* Student Type Selector */}
+              <div className="fg">
+                <label className="fl">Student Type</label>
+                <div style={{ display:"flex", gap:8 }}>
+                  {[["IEP","IEP","#2d7d5e","#edf4f0"],["504","504","#1d4ed8","#dbeafe"],["GenEd","Gen Ed","#7c3aed","#f0eaff"]].map(([val,lbl,col,bg]) => (
+                    <button key={val} onClick={() => setF("studentType", val)}
+                      style={{ flex:1, padding:"10px 6px", borderRadius:9, border:"2px solid", fontFamily:"inherit", cursor:"pointer", fontSize:14, fontWeight:700, transition:"all .15s",
+                        borderColor: form.studentType===val ? col : "var(--bdr)",
+                        background: form.studentType===val ? bg : "var(--inp)",
+                        color: form.studentType===val ? col : "var(--txt2)" }}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize:12, color:"var(--txt2)", marginTop:5 }}>
+                  {form.studentType==="IEP" && "IEP students have goals and set service minutes."}
+                  {form.studentType==="504" && "504 students have a 504 plan but no IEP goals."}
+                  {form.studentType==="GenEd" && "General education students — no goals or set minutes."}
+                </div>
+              </div>
+              <div className="div" />
               <div className="sec">Basic Info</div>
               <div className="fr">
                 <div className="fg">
@@ -1911,6 +2009,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                   <input className="fc" placeholder="e.g. 9th, 10th" value={form.grade} onChange={e => setF("grade", e.target.value)} />
                 </div>
               </div>
+              {form.studentType !== "GenEd" && (<>
               <div className="div" />
               <div className="sec">Service Minutes Per Month</div>
               <div className="fr">
@@ -1923,10 +2022,12 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                   <input type="number" className="fc" placeholder="e.g. 30" value={form.indirectMinutesPerMonth} onChange={e => setF("indirectMinutesPerMonth", e.target.value)} />
                 </div>
               </div>
+              </>)}
+              {form.studentType === "IEP" && (<>
               <div className="div" />
               <div className="sec" style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <span>IEP Goals ({(form.goals||[]).length})</span>
-                <button className="btn btn-o btn-sm" onClick={openAddGoal} style={{ fontSize:12 }}>＋ Add Goal</button>
+                <button className="btn btn-o btn-sm" onClick={openAddGoal} style={{ fontSize:12 }}>+ Add Goal</button>
               </div>
 
               {/* Goal list */}
@@ -2010,13 +2111,24 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                   </div>
                 </div>
               )}
+              </>)}
               <div className="div" />
-              <div className="sec">Meeting / IEP Info</div>
+              <div className="sec">{form.studentType==="IEP" ? "Meeting / IEP Info" : form.studentType==="504" ? "504 Plan Info" : "Meeting Info"}</div>
               <div className="fg">
                 <label className="fl">Meeting Type</label>
                 <div className="pill-wrap">
-                  <button className={`pill ${form.meetingType==="Annual"?"sel":""}`} onClick={() => setF("meetingType","Annual")}>Annual IEP</button>
-                  <button className={`pill ${form.meetingType==="Reevaluation"?"sel":""}`} onClick={() => setF("meetingType","Reevaluation")}>Re-evaluation</button>
+                  {form.studentType==="IEP" && <>
+                    <button className={`pill ${form.meetingType==="Annual"?"sel":""}`} onClick={() => setF("meetingType","Annual")}>Annual IEP</button>
+                    <button className={`pill ${form.meetingType==="Reevaluation"?"sel":""}`} onClick={() => setF("meetingType","Reevaluation")}>Re-evaluation</button>
+                  </>}
+                  {form.studentType==="504" && <>
+                    <button className={`pill ${form.meetingType==="Annual"?"sel":""}`} onClick={() => setF("meetingType","Annual")}>Annual Review</button>
+                    <button className={`pill ${form.meetingType==="Reevaluation"?"sel":""}`} onClick={() => setF("meetingType","Reevaluation")}>Re-evaluation</button>
+                  </>}
+                  {form.studentType==="GenEd" && <>
+                    <button className={`pill ${form.meetingType==="Annual"?"sel":""}`} onClick={() => setF("meetingType","Annual")}>Annual</button>
+                    <button className={`pill ${form.meetingType==="Other"?"sel":""}`} onClick={() => setF("meetingType","Other")}>Other</button>
+                  </>}
                 </div>
               </div>
               <div className="fr">
