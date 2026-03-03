@@ -2704,169 +2704,102 @@ function GoalProgressPage({ students, sessions, saveSession }) {
    EVALUATION CHECKLISTS BY CATEGORY
 ══════════════════════════════════════ */
 const EVAL_TEMPLATES = {
+  "MH": {
+    label: "Mental Health Concerns",
+    color: "#7c3aed", bg: "#f0eaff",
+    custom: true,
+    components: [
+      { title: "Referral & Background", subtasks: ["Review referral reason and presenting concerns", "Gather teacher behavioral input", "Collect parent/guardian background history", "Review academic and attendance records", "Review prior mental health records if available"] },
+      { title: "Clinical Interviews", subtasks: ["Conduct student clinical interview", "Conduct parent clinical interview", "Conduct teacher consultation"] },
+      { title: "Behavioral Rating Scales", subtasks: ["Administer BASC-3 (parent form)", "Administer BASC-3 (teacher form)", "Administer BASC-3 (self-report if age appropriate)"] },
+      { title: "Emotional/Mood Assessment", subtasks: ["Administer depression screening (e.g. CDI-2, BDI)", "Administer anxiety screening (e.g. RCADS, MASC, SCARED)", "Screen for trauma history (e.g. CPSS, CRIES)"] },
+      { title: "Observation", subtasks: ["Observe student in classroom", "Observe student in unstructured setting", "Document emotional regulation behaviors"] },
+      { title: "Risk Assessment", subtasks: ["Screen for suicidal ideation/self-harm", "Document safety plan if indicated", "Notify appropriate staff and parents if risk identified"] },
+      { title: "Eligibility Determination", subtasks: ["Determine if ED criteria are met", "Rule out social maladjustment as sole factor", "Document adverse educational impact", "Consider 504 if IDEA not met but impairment present"] },
+      { title: "Report & Recommendations", subtasks: ["Draft evaluation report", "Include evidence-based recommendations", "Recommend counseling services if applicable", "Schedule eligibility/review meeting", "Provide parent feedback"] },
+    ]
+  },
+  "ED": {
+    label: "Emotional Disturbance",
+    color: "#7c3aed", bg: "#ede9fe",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations & records", "Review disciplinary and attendance history", "Gather teacher input", "Review any existing 504/intervention plans"] },
+      { title: "Clinical Interview", subtasks: ["Conduct student clinical interview", "Conduct parent interview", "Consult with teachers and support staff"] },
+      { title: "Behavioral/Emotional Rating Scales", subtasks: ["Administer BASC-3 (parent, teacher, self-report)", "Administer Conners-3 if ADHD concerns present", "Administer trauma screening if indicated"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery (WISC-V, RIAS-2, etc.)", "Assess working memory and processing speed", "Document executive functioning"] },
+      { title: "Academic Achievement", subtasks: ["Administer academic achievement measure (WIAT-4, WJ-IV)", "Compare performance to cognitive ability", "Document academic impact of emotional concerns"] },
+      { title: "Social-Emotional Functioning", subtasks: ["Assess emotional regulation", "Assess interpersonal relationship quality", "Screen for trauma, anxiety, depression, mood disorders", "Review mental health diagnoses if applicable"] },
+      { title: "Observation", subtasks: ["Observe in structured academic setting", "Observe in unstructured/social setting", "Complete functional behavioral assessment (FBA) if needed"] },
+      { title: "Exclusionary Factors", subtasks: ["Rule out social maladjustment as primary factor", "Rule out cultural or linguistic differences", "Rule out lack of instruction as cause"] },
+      { title: "Risk Assessment", subtasks: ["Screen for suicidal ideation or self-harm", "Document safety planning if indicated", "Notify parents and administration if risk present"] },
+      { title: "Eligibility & Report", subtasks: ["Apply ED criteria (5 characteristics, long duration)", "Document adverse educational impact", "Write evaluation report", "Schedule eligibility meeting (10-day notice)", "Present findings and recommendations to team"] },
+    ]
+  },
+  "ASD": {
+    label: "Autism Spectrum Disorder",
+    color: "#065f46", bg: "#d1fae5",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations and IEPs", "Gather teacher input", "Collect developmental and medical history", "Review any prior ASD diagnoses"] },
+      { title: "Clinical & Parent Interview", subtasks: ["Conduct structured parent interview (ADI-R or similar)", "Conduct student clinical interview/interaction", "Gather teacher observations"] },
+      { title: "ASD-Specific Rating Scales", subtasks: ["Administer GARS-3 or CARS-2", "Administer parent ASD rating scale", "Administer teacher ASD rating scale", "Administer BASC-3 for behavioral profile"] },
+      { title: "Social-Emotional & Communication", subtasks: ["Assess social communication skills", "Assess pragmatic language (consult SLP)", "Assess restricted/repetitive behaviors", "Screen for anxiety and sensory sensitivities"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery (nonverbal-friendly if needed)", "Assess working memory and processing speed", "Document executive functioning profile"] },
+      { title: "Adaptive Behavior", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent and teacher ratings", "Assess daily living and social skills"] },
+      { title: "Structured Observation", subtasks: ["Observe in structured setting", "Observe in unstructured/social setting", "Document social interaction patterns", "Note restricted/repetitive behaviors"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm ASD criteria met (DSM-5 aligned)", "Rule out exclusionary factors", "Document adverse educational impact", "Write evaluation report", "Schedule eligibility meeting"] },
+    ]
+  },
+  "OHI_ADHD": {
+    label: "OHI — ADHD",
+    color: "#b45309", bg: "#fef3c7",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations and intervention data", "Review academic records and grades", "Review attendance and disciplinary history", "Gather prior ADHD assessments if available"] },
+      { title: "Clinical & Parent Interview", subtasks: ["Conduct structured parent interview", "Gather developmental history (prenatal, early childhood)", "Screen for home/environmental factors", "Conduct student clinical interview"] },
+      { title: "ADHD Rating Scales", subtasks: ["Administer Conners-3 (parent form)", "Administer Conners-3 (teacher form)", "Administer Conners-3 (self-report if applicable)", "Administer BASC-3 for broader behavioral profile", "Administer BRIEF-2 for executive functioning"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery (WISC-V or RIAS-2)", "Assess working memory index", "Assess processing speed index", "Document executive functioning profile"] },
+      { title: "Academic Achievement", subtasks: ["Administer academic achievement measure", "Assess attention impact on academics", "Document performance variability"] },
+      { title: "Medical Documentation", subtasks: ["Obtain physician/specialist diagnosis if available", "Review medication history and current medications", "Document health condition and educational impact"] },
+      { title: "Observation", subtasks: ["Observe in academic setting", "Note attention, impulsivity, activity level", "Complete structured observation if needed"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm medical diagnosis from licensed physician if relying on OHI", "Document limited alertness/heightened alertness due to ADHD", "Document adverse educational impact", "Write evaluation report", "Schedule eligibility meeting"] },
+    ]
+  },
   "SLD": {
     label: "Specific Learning Disability",
     color: "#1d4ed8", bg: "#dbeafe",
     components: [
       { title: "Review of Existing Data", subtasks: ["Review prior evaluations & IEPs", "Gather teacher input/rating scales", "Review intervention data (RTI/MTSS)", "Review attendance and disciplinary records", "Gather parent input"] },
-      { title: "Cognitive Assessment", subtasks: ["Select appropriate cognitive battery", "Administer cognitive assessment", "Score and interpret results", "Document processing strengths/weaknesses"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery (WISC-V, RIAS-2, WJ-IV Cognitive)", "Score and interpret results", "Document processing strengths and weaknesses"] },
       { title: "Academic Achievement", subtasks: ["Administer reading assessment", "Administer math assessment", "Administer written expression assessment", "Compare achievement to cognitive ability"] },
-      { title: "Processing Assessment", subtasks: ["Assess phonological processing", "Assess working memory", "Assess processing speed", "Assess executive functioning if needed"] },
-      { title: "Classroom Observation", subtasks: ["Observe in primary area of concern", "Complete structured observation form", "Document academic engagement"] },
-      { title: "Eligibility Determination", subtasks: ["Apply pattern of strengths and weaknesses (PSW) or discrepancy model", "Rule out exclusionary factors", "Document adverse educational impact", "Write eligibility summary"] },
-      { title: "Report Writing", subtasks: ["Draft evaluation report", "Peer review / supervisor review", "Finalize and sign report"] },
-      { title: "Eligibility Meeting", subtasks: ["Schedule eligibility meeting", "Notify parents (10-day notice)", "Prepare present levels and recommendations", "Hold meeting and document outcomes"] },
-    ]
-  },
-  "ASD": {
-    label: "Autism Spectrum Disorder",
-    color: "#065f46", bg: "#d1f5e5",
-    components: [
-      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Gather teacher/parent input", "Review medical/diagnostic history", "Collect developmental history"] },
-      { title: "Autism-Specific Rating Scales", subtasks: ["Administer GARS / CARS / BASC-3 BESS", "Administer parent rating scale", "Administer teacher rating scale"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer nonverbal cognitive measure if needed", "Document cognitive profile"] },
-      { title: "Adaptive Behavior Assessment", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent/teacher report", "Assess communication, daily living, socialization"] },
-      { title: "Social/Communication Assessment", subtasks: ["Assess social communication skills", "Assess pragmatic language", "Referral to SLP if needed"] },
-      { title: "Structured Observation", subtasks: ["Observe in structured setting", "Observe in unstructured/social setting", "Document restricted/repetitive behaviors"] },
-      { title: "Eligibility Determination", subtasks: ["Confirm meets ASD criteria under IDEA", "Rule out exclusionary factors", "Document adverse educational impact"] },
-      { title: "Report & Meeting", subtasks: ["Write evaluation report", "Schedule eligibility meeting", "Present findings to team", "Document outcomes"] },
-    ]
-  },
-  "OHI": {
-    label: "Other Health Impairment",
-    color: "#9a3412", bg: "#fed7aa",
-    components: [
-      { title: "Medical Documentation", subtasks: ["Obtain physician/specialist diagnosis", "Review medical records", "Document health condition and impact"] },
-      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Gather teacher input", "Review attendance/academic records"] },
-      { title: "Cognitive Assessment (if needed)", subtasks: ["Determine if cognitive assessment is warranted", "Administer appropriate battery", "Document results"] },
-      { title: "Academic Achievement", subtasks: ["Assess academic performance", "Document discrepancy from health condition"] },
-      { title: "Health Impact Assessment", subtasks: ["Document how condition affects alertness/energy", "Assess medication side effects impact", "Gather parent input on functional limitations"] },
-      { title: "Classroom Observation", subtasks: ["Observe student in classroom", "Note attention and stamina"] },
-      { title: "Eligibility Determination", subtasks: ["Confirm diagnosis from licensed physician", "Document limited strength/vitality/alertness", "Show adverse educational impact"] },
-      { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
-    ]
-  },
-  "ED": {
-    label: "Emotional Disturbance",
-    color: "#7c3aed", bg: "#f0eaff",
-    components: [
-      { title: "Review of Existing Data", subtasks: ["Review prior evaluations & records", "Review disciplinary history", "Gather teacher input", "Review attendance patterns"] },
-      { title: "Social-Emotional Rating Scales", subtasks: ["Administer BASC-3 (parent, teacher, self-report)", "Administer BRIEF-2 if executive functioning concern", "Administer behavior intervention data"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery", "Assess working memory and processing speed"] },
-      { title: "Academic Achievement", subtasks: ["Assess current academic performance", "Compare to potential given cognitive findings"] },
-      { title: "Social-Emotional Functioning", subtasks: ["Assess emotional regulation", "Assess interpersonal relationships", "Review mental health history/diagnoses"] },
-      { title: "Observation", subtasks: ["Observe in classroom", "Observe in unstructured settings", "Complete functional behavioral assessment (FBA) if needed"] },
-      { title: "Exclusionary Factors", subtasks: ["Rule out social maladjustment as primary factor", "Rule out cultural/linguistic differences", "Rule out lack of instruction"] },
-      { title: "Eligibility & Report", subtasks: ["Apply criteria (5 characteristics, chronic nature)", "Document adverse educational impact", "Write report and schedule meeting"] },
+      { title: "Processing Assessment", subtasks: ["Assess phonological processing (CTOPP-2)", "Assess working memory", "Assess processing speed", "Assess executive functioning if needed"] },
+      { title: "Classroom Observation", subtasks: ["Observe in primary area of concern", "Complete structured observation form", "Document academic engagement and effort"] },
+      { title: "Eligibility Determination", subtasks: ["Apply PSW or discrepancy model per state guidelines", "Rule out exclusionary factors (vision, hearing, ELL, lack of instruction)", "Document adverse educational impact", "Write eligibility summary"] },
+      { title: "Report Writing", subtasks: ["Draft evaluation report", "Supervisor/peer review", "Finalize and sign report"] },
+      { title: "Eligibility Meeting", subtasks: ["Schedule meeting (10-day notice to parents)", "Prepare present levels and recommendations", "Hold meeting and document outcomes"] },
     ]
   },
   "ID": {
     label: "Intellectual Disability",
     color: "#be185d", bg: "#fce7f3",
     components: [
-      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Review developmental history", "Gather teacher input", "Collect parent input"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer comprehensive cognitive battery", "Document intellectual functioning (FSIQ or composite)", "Assess all cognitive domains"] },
-      { title: "Adaptive Behavior Assessment", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent interview/rating", "Gather teacher rating", "Document conceptual, social, practical skills"] },
-      { title: "Academic Achievement", subtasks: ["Assess academic skills", "Document functional academic skills"] },
-      { title: "Transition Assessment (age 14+)", subtasks: ["Assess vocational interests", "Assess independent living skills", "Document transition needs"] },
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Review developmental history", "Gather teacher input", "Collect parent input and history"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer comprehensive cognitive battery", "Document overall intellectual functioning (FSIQ or composite)", "Assess all cognitive domains"] },
+      { title: "Adaptive Behavior Assessment", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent interview/rating", "Gather teacher rating", "Document conceptual, social, and practical skills"] },
+      { title: "Academic Achievement", subtasks: ["Assess current academic skills", "Document functional academic performance"] },
+      { title: "Social-Emotional Screening", subtasks: ["Screen for co-occurring mental health concerns", "Administer behavioral rating scales (BASC-3)"] },
       { title: "Observation", subtasks: ["Observe in academic setting", "Observe in social/functional setting"] },
-      { title: "Eligibility Determination", subtasks: ["Confirm significant limitations in intellectual functioning (2+ SD below mean)", "Confirm significant adaptive behavior deficits", "Confirm onset before age 18", "Rule out exclusionary factors"] },
+      { title: "Eligibility Determination", subtasks: ["Confirm significant intellectual functioning limitation (2+ SD below mean)", "Confirm significant adaptive behavior deficits in 2+ areas", "Confirm onset before age 18", "Rule out exclusionary factors"] },
       { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
     ]
   },
-  "SLI": {
-    label: "Speech/Language Impairment",
-    color: "#0369a1", bg: "#e0f2fe",
+  "CUSTOM": {
+    label: "Custom / Other",
+    color: "#475569", bg: "#f1f5f9",
+    custom: true,
     components: [
-      { title: "Referral & Background", subtasks: ["Review referral reason", "Gather teacher input", "Collect developmental/medical history", "Review prior speech services"] },
-      { title: "Articulation/Phonology", subtasks: ["Administer standardized articulation test", "Conduct phonological process analysis", "Assess intelligibility in connected speech"] },
-      { title: "Language Assessment", subtasks: ["Administer receptive language measure", "Administer expressive language measure", "Assess vocabulary and semantics", "Assess morphology and syntax"] },
-      { title: "Fluency Assessment (if applicable)", subtasks: ["Assess disfluency rate and type", "Conduct fluency observation"] },
-      { title: "Voice Assessment (if applicable)", subtasks: ["Assess voice quality and resonance", "Referral to ENT if indicated"] },
-      { title: "Pragmatic/Social Language", subtasks: ["Assess conversational skills", "Assess narrative language"] },
-      { title: "Eligibility Determination", subtasks: ["Apply state criteria for SLI", "Document adverse educational impact", "Rule out exclusionary factors"] },
-      { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
-    ]
-  },
-  "DD": {
-    label: "Developmental Delay",
-    color: "#a16207", bg: "#fef9c3",
-    components: [
-      { title: "Review of Existing Data", subtasks: ["Review medical records", "Gather parent developmental history", "Collect prior evaluation data", "Review early intervention records"] },
-      { title: "Developmental Assessment", subtasks: ["Administer developmental battery (Battelle, Bayley, etc.)", "Assess all developmental domains"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer age-appropriate cognitive measure", "Document cognitive profile"] },
-      { title: "Adaptive Behavior", subtasks: ["Administer adaptive behavior measure", "Gather parent and teacher ratings"] },
-      { title: "Motor Assessment (if applicable)", subtasks: ["Referral to OT/PT if motor concerns", "Document fine and gross motor functioning"] },
-      { title: "Communication Assessment", subtasks: ["SLP referral if communication concerns", "Document receptive and expressive communication"] },
-      { title: "Observation", subtasks: ["Observe in educational setting", "Document age-appropriate behavior"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm delay in one or more developmental areas", "Note: DD eligibility typically ends at age 9", "Write report and schedule meeting"] },
-    ]
-  },
-  "TBI": {
-    label: "Traumatic Brain Injury",
-    color: "#c2410c", bg: "#ffedd5",
-    components: [
-      { title: "Medical Documentation", subtasks: ["Obtain medical records documenting TBI", "Review neuropsychological evaluation if available", "Document pre-injury functioning"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer comprehensive cognitive battery", "Assess processing speed and working memory", "Assess executive functioning (BRIEF-2)"] },
-      { title: "Academic Achievement", subtasks: ["Compare current performance to pre-injury levels", "Assess all academic domains"] },
-      { title: "Memory & Attention", subtasks: ["Administer memory assessment", "Assess sustained and selective attention"] },
-      { title: "Behavioral/Emotional", subtasks: ["Administer behavior rating scales (BASC-3)", "Assess emotional regulation", "Screen for PTSD/anxiety if indicated"] },
-      { title: "Adaptive Functioning", subtasks: ["Assess daily living skills", "Assess social functioning"] },
-      { title: "Observation", subtasks: ["Observe in classroom", "Note fatigue patterns and functional impact"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm open/closed head injury documentation", "Document adverse educational impact due to TBI", "Write report and schedule meeting"] },
-    ]
-  },
-  "HI": {
-    label: "Hearing Impairment",
-    color: "#0f766e", bg: "#ccfbf1",
-    components: [
-      { title: "Audiological Evaluation", subtasks: ["Obtain current audiogram from audiologist", "Document type and degree of hearing loss", "Assess hearing aid/cochlear implant use"] },
-      { title: "Review of Existing Data", subtasks: ["Review medical records", "Gather teacher input", "Review communication history"] },
-      { title: "Communication Assessment", subtasks: ["Assess oral/auditory communication", "Assess sign language if applicable", "SLP assessment of receptive/expressive language"] },
-      { title: "Academic Achievement", subtasks: ["Administer academic battery (nonverbal if needed)", "Assess reading and written expression"] },
-      { title: "Cognitive Assessment", subtasks: ["Use nonverbal cognitive measure if appropriate", "Document cognitive profile"] },
-      { title: "Functional Hearing Assessment", subtasks: ["Assess hearing in educational environment", "Evaluate need for FM system/assistive technology"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm documented hearing impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
-    ]
-  },
-  "VI": {
-    label: "Visual Impairment",
-    color: "#1e3a5f", bg: "#dbeafe",
-    components: [
-      { title: "Ophthalmological Evaluation", subtasks: ["Obtain current eye exam from eye specialist", "Document visual acuity and field", "Assess low vision aids if applicable"] },
-      { title: "Functional Vision Assessment", subtasks: ["Conduct functional vision assessment (TVI)", "Assess visual efficiency in academic tasks"] },
-      { title: "Learning Media Assessment", subtasks: ["Determine primary learning medium (print, braille, both)", "Assess braille readiness if applicable"] },
-      { title: "Cognitive Assessment", subtasks: ["Use appropriate cognitive measure (verbal subtests if needed)", "Document cognitive profile"] },
-      { title: "Academic Achievement", subtasks: ["Adapt assessments for visual impairment", "Assess reading and academic skills in preferred medium"] },
-      { title: "Orientation & Mobility", subtasks: ["O&M specialist assessment if applicable", "Document travel and orientation needs"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm documented visual impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
-    ]
-  },
-  "OI": {
-    label: "Orthopedic Impairment",
-    color: "#6b21a8", bg: "#f3e8ff",
-    components: [
-      { title: "Medical Documentation", subtasks: ["Obtain medical documentation of orthopedic condition", "Review physical therapy records", "Document functional limitations"] },
-      { title: "OT/PT Assessment", subtasks: ["OT evaluation of fine motor and daily living skills", "PT evaluation of mobility and gross motor skills", "Assess assistive technology needs"] },
-      { title: "Cognitive Assessment (if needed)", subtasks: ["Determine if cognitive assessment warranted", "Use adapted administration if needed"] },
-      { title: "Academic Achievement", subtasks: ["Adapt assessment for physical limitations", "Assess academic performance"] },
-      { title: "Functional Impact Assessment", subtasks: ["Document how condition affects school participation", "Assess fatigue and endurance"] },
-      { title: "Assistive Technology", subtasks: ["AT evaluation if communication/writing impacted", "Document AT needs and recommendations"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm documented orthopedic impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
-    ]
-  },
-  "MD": {
-    label: "Multiple Disabilities",
-    color: "#374151", bg: "#f3f4f6",
-    components: [
-      { title: "Review of Existing Data", subtasks: ["Review all prior evaluations", "Gather input from all service providers", "Document all known diagnoses"] },
-      { title: "Cognitive Assessment", subtasks: ["Administer appropriate cognitive battery", "Use adapted/alternative assessment if needed", "Document all cognitive domains"] },
-      { title: "Adaptive Behavior", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent and teacher ratings", "Document functional skills across settings"] },
-      { title: "Communication Assessment", subtasks: ["SLP assessment", "Assess AAC needs if applicable"] },
-      { title: "OT/PT Assessment", subtasks: ["OT evaluation if motor/sensory concerns", "PT evaluation if mobility concerns"] },
-      { title: "Functional & Academic Assessment", subtasks: ["Assess functional academics", "Document alternate assessment eligibility if applicable"] },
-      { title: "Behavioral Assessment (if needed)", subtasks: ["Conduct FBA if behavior is a concern", "Administer behavior rating scales"] },
-      { title: "Eligibility & Report", subtasks: ["Confirm two or more qualifying disabilities", "Document that needs cannot be met by single disability category", "Write report and schedule meeting"] },
+      { title: "Referral & Background", subtasks: ["Document referral reason", "Gather background information", "Review existing records"] },
+      { title: "Assessment", subtasks: ["Determine appropriate measures", "Administer selected assessments", "Score and interpret results"] },
+      { title: "Observation", subtasks: ["Observe student in relevant settings", "Document functional behavior"] },
+      { title: "Eligibility & Report", subtasks: ["Determine eligibility if applicable", "Write evaluation report", "Schedule meeting"] },
     ]
   },
 };
@@ -2878,12 +2811,15 @@ function EvaluationsPage({ students, saveStudent }) {
   const [showModal, setShowModal] = useState(false);
   const [editEvalId, setEditEvalId] = useState(null);
   const [editStudentId, setEditStudentId] = useState(null);
-  const [expandedEval, setExpandedEval] = useState(null); // "studentId:evalId"
-  const [editingItem, setEditingItem] = useState(null);   // { studentId, evalId, itemIdx, subtaskIdx } or null
+  const [expandedEval, setExpandedEval] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
   const [newSubtask, setNewSubtask] = useState("");
   const [newItemTitle, setNewItemTitle] = useState("");
-  const [addingItem, setAddingItem] = useState(null);     // "studentId:evalId"
+  const [addingItem, setAddingItem] = useState(null);
   const [search, setSearch] = useState("");
+  // Custom test builder for MH/Custom evals
+  const [customTestInput, setCustomTestInput] = useState("");
+  const [customTestSection, setCustomTestSection] = useState("");
 
   // New eval form
   const defaultEvalForm = () => ({
@@ -3025,7 +2961,7 @@ function EvaluationsPage({ students, saveStudent }) {
     const ev = {
       id: uid(), studentId: s.id, category: s.studentType === "504" ? "OHI" : "SLD",
       dueDate: s.meetingDueDate, startDate: todayStr(), status: "In Progress", notes: "", autoPopulated: true,
-      checklist: (EVAL_TEMPLATES["SLD"]?.components || []).map(c => ({
+      checklist: (EVAL_TEMPLATES["MH"]?.components || []).map(c => ({
         title: c.title, subtasks: c.subtasks.map(t => ({ text: t, done: false }))
       }))
     };
@@ -3033,8 +2969,10 @@ function EvaluationsPage({ students, saveStudent }) {
   };
 
   const handleOpenNew = (studentId = "") => {
-    setForm({ ...defaultEvalForm(), studentId });
+    setForm({ ...defaultEvalForm(), studentId, customTests:[] });
     setEditEvalId(null);
+    setCustomTestInput("");
+    setCustomTestSection("");
     setShowModal(true);
   };
 
@@ -3043,9 +2981,26 @@ function EvaluationsPage({ students, saveStudent }) {
     const st = students.find(s => s.id === form.studentId);
     if (!st) return;
     const template = EVAL_TEMPLATES[form.category];
-    const checklist = template
+    let checklist = template
       ? template.components.map(c => ({ title: c.title, subtasks: c.subtasks.map(t => ({ text: t, done: false })) }))
       : [];
+    // Merge any custom tests added in the modal
+    if (form.customTests && form.customTests.length > 0) {
+      const grouped = {};
+      form.customTests.forEach(ct => {
+        const sec = ct.section || "Additional Tests";
+        if (!grouped[sec]) grouped[sec] = [];
+        grouped[sec].push({ text: ct.name, done: false });
+      });
+      Object.entries(grouped).forEach(([sec, subs]) => {
+        const existing = checklist.find(c => c.title === sec);
+        if (existing) {
+          existing.subtasks = [...existing.subtasks, ...subs];
+        } else {
+          checklist.push({ title: sec, subtasks: subs });
+        }
+      });
+    }
     const ev = { id: form.id || uid(), studentId: form.studentId, category: form.category, dueDate: form.dueDate, startDate: form.startDate || todayStr(), status: form.status, notes: form.notes, checklist };
     const existingEvals = (st.evaluations || []).filter(e => e.id !== ev.id);
     await saveStudent({ ...st, evaluations: [...existingEvals, ev] });
@@ -3253,13 +3208,26 @@ function EvaluationsPage({ students, saveStudent }) {
                 <label className="fl">Disability Category *</label>
                 <select className="fc" value={form.category} onChange={e => setF("category", e.target.value)}>
                   <option value="">Select category...</option>
-                  {Object.entries(EVAL_TEMPLATES).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label} ({k})</option>
-                  ))}
+                  <optgroup label="Mental Health">
+                    <option value="MH">Mental Health Concerns (MH)</option>
+                    <option value="ED">Emotional Disturbance (ED)</option>
+                    <option value="ASD">Autism Spectrum Disorder (ASD)</option>
+                    <option value="OHI_ADHD">OHI — ADHD</option>
+                  </optgroup>
+                  <optgroup label="Cognitive / Academic">
+                    <option value="SLD">Specific Learning Disability (SLD)</option>
+                    <option value="ID">Intellectual Disability (ID)</option>
+                  </optgroup>
+                  <optgroup label="Other">
+                    <option value="CUSTOM">Custom / Other</option>
+                  </optgroup>
                 </select>
                 {form.category && EVAL_TEMPLATES[form.category] && (
                   <div style={{ marginTop:8, fontSize:12, color:"var(--txt2)", background:"var(--inp)", borderRadius:7, padding:"8px 10px" }}>
-                    Will auto-generate {EVAL_TEMPLATES[form.category].components.length} checklist sections with {EVAL_TEMPLATES[form.category].components.reduce((n,c)=>n+c.subtasks.length,0)} tasks.
+                    {EVAL_TEMPLATES[form.category].custom
+                      ? <span>Starts with a recommended MH checklist. Add specific tests below.</span>
+                      : <span>Auto-generates {EVAL_TEMPLATES[form.category].components.length} sections · {EVAL_TEMPLATES[form.category].components.reduce((n,c)=>n+c.subtasks.length,0)} tasks. You can edit after creating.</span>
+                    }
                   </div>
                 )}
               </div>
@@ -3277,6 +3245,59 @@ function EvaluationsPage({ students, saveStudent }) {
                 <label className="fl">Notes (optional)</label>
                 <textarea className="fc" rows={2} placeholder="Any notes about this evaluation..." value={form.notes} onChange={e => setF("notes", e.target.value)} />
               </div>
+
+              {/* Custom test builder — shown for MH / Custom categories */}
+              {form.category && (EVAL_TEMPLATES[form.category]?.custom || form.category === "CUSTOM") && (
+                <div>
+                  <div className="div" />
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                    <label className="fl" style={{ marginBottom:0 }}>Additional Tests / Measures</label>
+                    <span style={{ fontSize:11, color:"var(--txt2)" }}>Add specific instruments to the checklist</span>
+                  </div>
+
+                  {/* Added tests list */}
+                  {(form.customTests || []).length > 0 && (
+                    <div style={{ marginBottom:10, display:"flex", flexDirection:"column", gap:5 }}>
+                      {(form.customTests || []).map((ct, i) => (
+                        <div key={i} style={{ display:"flex", alignItems:"center", gap:8, background:"var(--inp)", borderRadius:8, padding:"7px 11px", border:"1px solid var(--bdr)" }}>
+                          <span style={{ fontSize:13, flex:1 }}><strong>{ct.name}</strong>{ct.section ? <span style={{ color:"var(--txt2)", fontSize:12 }}> → {ct.section}</span> : ""}</span>
+                          <button onClick={() => setF("customTests", (form.customTests||[]).filter((_,j)=>j!==i))}
+                            style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#ccc", lineHeight:1 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add test input */}
+                  <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                    <input className="fc" placeholder="Test/measure name (e.g. BASC-3, CDI-2, SCARED...)"
+                      value={customTestInput} onChange={e => setCustomTestInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && customTestInput.trim()) {
+                          setF("customTests", [...(form.customTests||[]), { name: customTestInput.trim(), section: customTestSection.trim() || "Additional Tests" }]);
+                          setCustomTestInput("");
+                        }
+                      }} />
+                    <div style={{ display:"flex", gap:7 }}>
+                      <select className="fc" value={customTestSection} onChange={e => setCustomTestSection(e.target.value)} style={{ flex:1 }}>
+                        <option value="">Add to section... (optional)</option>
+                        {form.category && (EVAL_TEMPLATES[form.category]?.components || []).map((c,i) => (
+                          <option key={i} value={c.title}>{c.title}</option>
+                        ))}
+                        <option value="Additional Tests">Additional Tests</option>
+                      </select>
+                      <button className="btn btn-o" onClick={() => {
+                        if (!customTestInput.trim()) return;
+                        setF("customTests", [...(form.customTests||[]), { name: customTestInput.trim(), section: customTestSection.trim() || "Additional Tests" }]);
+                        setCustomTestInput("");
+                      }}>+ Add</button>
+                    </div>
+                    <div style={{ fontSize:11, color:"var(--txt2)" }}>
+                      Press Enter or click Add. Each test becomes a subtask in the selected section.
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="mf">
               <button className="btn btn-g" onClick={() => setShowModal(false)}>Cancel</button>
