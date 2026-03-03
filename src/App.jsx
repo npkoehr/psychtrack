@@ -584,7 +584,7 @@ export default function App() {
   }, [authed]);
 
   // Split students vs groups
-  const realStudents = students.filter(s => !s.isGroup);
+  const realStudents = students.filter(s => !s.isGroup && !s.archived);
   const groups = students.filter(s => s.isGroup);
 
   const saveStudent = useCallback(async (student) => { setSyncStatus("syncing"); await upsertStudent(student); }, []);
@@ -635,13 +635,14 @@ export default function App() {
   );
 
   const nav = [
-    { id: "tracking", ico: "📝", label: "Tracking" },
-    { id: "services", ico: "⏱️", label: "Services" },
-    { id: "goals",    ico: "📈", label: "Goal Progress" },
-    { id: "meetings", ico: "📅", label: "Meetings" },
-    { id: "manage",   ico: "👥", label: "Manage Students" },
+    { id: "tracking",    ico: "📝", label: "Tracking" },
+    { id: "services",   ico: "⏱️", label: "Services" },
+    { id: "goals",      ico: "📈", label: "Goal Progress" },
+    { id: "meetings",  ico: "📅", label: "Meetings" },
+    { id: "evals",     ico: "🔍", label: "Evaluations" },
+    { id: "manage",    ico: "👥", label: "Manage Students" },
   ];
-  const titles = { tracking: "Session Tracking", services: "Services", goals: "Goal Progress", meetings: "Meetings", manage: "Manage Students" };
+  const titles = { tracking: "Session Tracking", services: "Services", goals: "Goal Progress", meetings: "Meetings", evals: "Evaluations", manage: "Manage Students" };
   const syncLabel = syncStatus === "syncing" ? "⟳ Syncing…" : syncStatus === "err" ? "⚠ Sync error" : "● Live";
 
   return (
@@ -686,8 +687,9 @@ export default function App() {
             {page === "tracking" && <TrackingPage students={realStudents} groups={groups} sessions={sessions} saveSession={saveSessionFn} saveGroupSession={saveGroupSessionFn} deleteSession={deleteSessionFn} toggleDocumented={toggleDocumentedFn} />}
             {page === "services" && <ServicesPage students={realStudents} sessions={sessions} />}
             {page === "meetings" && <MeetingsPage students={realStudents} saveStudent={saveStudent} />}
-            {page === "goals"    && <GoalProgressPage students={realStudents} sessions={sessions} />}
+            {page === "goals"    && <GoalProgressPage students={realStudents} sessions={sessions} saveSession={saveSessionFn} />}
             {page === "manage"   && <ManagePage students={realStudents} groups={groups} sessions={sessions} saveStudent={saveStudent} deleteStudent={deleteStudentFn} allStudents={students} />}
+            {page === "evals"    && <EvaluationsPage students={realStudents} saveStudent={saveStudent} />}
           </div>
         </main>
 
@@ -700,6 +702,7 @@ export default function App() {
             { id:"services", ico:"⏱️", lbl:"Services" },
             { id:"goals",    ico:"📈", lbl:"Goals" },
             { id:"meetings", ico:"📅", lbl:"Meetings" },
+            { id:"evals",    ico:"🔍", lbl:"Evals" },
             { id:"manage",   ico:"👥", lbl:"Students" },
           ].map(n => (
             <button key={n.id} className={`bni ${page===n.id?"active":""}`} onClick={() => setPage(n.id)}>
@@ -1285,7 +1288,8 @@ function ServicesPage({ students, sessions }) {
   const months = getYMOptions();
   const isCurrentMonth = selMonth === nowYM();
 
-  const data = useMemo(() => students.map(st => {
+  const activeStudents = useMemo(() => students.filter(s => !s.discontinued), [students]);
+  const data = useMemo(() => activeStudents.map(st => {
     const used = minutesUsedInMonth(sessions, st.id, selMonth);
     const remD = Math.max(0, st.directMinutesPerMonth - used.direct);
     const remI = Math.max(0, st.indirectMinutesPerMonth - used.indirect);
@@ -1456,7 +1460,7 @@ function MeetingsPage({ students, saveStudent }) {
   const [calMonth, setCalMonth] = useState(nowYM());
 
   const upcoming = useMemo(() => students
-    .filter(s => s.meetingDueDate && !s.meetingCompleted)
+    .filter(s => !s.discontinued && s.meetingDueDate && !s.meetingCompleted)
     .map(s => {
       const days = daysUntil(s.meetingDueDate);
       const isAnnual = s.meetingType === "Annual";
@@ -1806,6 +1810,39 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
         <button className="btn btn-p" onClick={openAdd} style={{ flex:"0 0 auto" }}>+ Add Student</button>
       </div>
       )}
+      {/* Archived Students */}
+      {manageTab === "students" && (() => {
+        const archivedStudents = allStudents.filter(s => !s.isGroup && s.archived);
+        if (archivedStudents.length === 0) return null;
+        return (
+          <div className="card" style={{ marginTop:14 }}>
+            <div className="ch" style={{ background:"#f0eaff" }}>
+              <span className="ct" style={{ color:"#5b21b6" }}>📦 Archived Students ({archivedStudents.length})</span>
+            </div>
+            <div className="tbl-wrap">
+              <table className="tbl">
+                <thead><tr><th>Name</th><th>Type</th><th>Grade</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {archivedStudents.map(s => (
+                    <tr key={s.id} style={{ opacity:.7 }}>
+                      <td><strong>{s.name}</strong></td>
+                      <td>{s.studentType==="504"?<span className="bdg bdg-a">504</span>:s.studentType==="GenEd"?<span className="bdg" style={{background:"#f0eaff",color:"#7c3aed"}}>GenEd</span>:<span className="bdg bdg-g">IEP</span>}</td>
+                      <td>{s.grade||"—"}</td>
+                      <td>
+                        <div style={{ display:"flex", gap:5 }}>
+                          <button className="btn btn-o btn-sm" onClick={() => saveStudent({...s, archived:false})}>Unarchive</button>
+                          <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Permanently delete?")) deleteStudent(s.id); }}>Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {manageTab === "groups" && (
       <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:15 }}>
         <button className="btn btn-p" style={{ background:"#7c3aed" }} onClick={openAddGroup}>＋ Add Group</button>
@@ -1861,9 +1898,17 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                       <td><span style={{ color:urgent?"var(--red)":"var(--txt)", fontWeight:urgent?600:400 }}>{s.meetingDueDate||"—"}{s.meetingCompleted&&<span className="bdg bdg-g" style={{ marginLeft:4 }}>Done</span>}</span></td>
                       <td><span className="bdg bdg-n">{sessions.filter(x=>x.studentId===s.id).length}</span></td>
                       <td>
-                        <div style={{ display:"flex", gap:5 }}>
+                        <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
                           <button className="btn btn-o btn-sm" onClick={() => openEdit(s)}>Edit</button>
-                          <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete student and all their sessions?")) deleteStudent(s.id); }}>Del</button>
+                          <button className="btn btn-sm" style={{ background:"#fef6cd", color:"#78450a", border:"1px solid #f0d060" }} onClick={() => {
+                            if(confirm(s.discontinued ? "Re-activate this student?" : "Discontinue services? This student will stay on your roster but won't appear in service/meeting reminders."))
+                              saveStudent({ ...s, discontinued: !s.discontinued });
+                          }}>{s.discontinued ? "Re-activate" : "Discontinue"}</button>
+                          <button className="btn btn-sm" style={{ background:"#f0eaff", color:"#5b21b6", border:"1px solid #c4a8f5" }} onClick={() => {
+                            if(confirm(s.archived ? "Unarchive this student?" : "Archive this student? They will be hidden from all active views. You can unarchive them from the Archived tab."))
+                              saveStudent({ ...s, archived: !s.archived });
+                          }}>{s.archived ? "Unarchive" : "Archive"}</button>
+                          <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Permanently delete student and all their sessions?")) deleteStudent(s.id); }}>Del</button>
                         </div>
                       </td>
                     </tr>
@@ -2158,7 +2203,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
 /* ══════════════════════════════════════
    GOAL PROGRESS PAGE
 ══════════════════════════════════════ */
-function GoalProgressPage({ students, sessions }) {
+function GoalProgressPage({ students, sessions, saveSession }) {
   const [selStudent, setSelStudent] = useState("");
   const [selGoalId, setSelGoalId] = useState("");
 
@@ -2199,8 +2244,8 @@ function GoalProgressPage({ students, sessions }) {
   }, [studentSessions, selectedGoal, trialSize]);
 
   const chartData = useMemo(() => {
-    if (!student) return [];
-    if (student.goalType === "trials") {
+    if (!selectedGoal) return [];
+    if (selectedGoal.goalType === "trials") {
       return trialSets.map(set => ({
         date: set.endDate,
         value: set.pct,
@@ -2270,6 +2315,39 @@ function GoalProgressPage({ students, sessions }) {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [selStudent, sessions]);
 
+  // Quick-log panel state
+  const [showLogPanel, setShowLogPanel] = useState(false);
+  const [logForm, setLogForm] = useState({ date:"", directMinutes:"", indirectMinutes:"", notes:"", trials:[], correct:"", incorrect:"", rubricScore:"", pmScore:"", documented:null });
+  const [logSaving, setLogSaving] = useState(false);
+  const [logSaved, setLogSaved] = useState(false);
+  const setLF = (k,v) => setLogForm(f => ({...f, [k]:v}));
+
+  const handleQuickLog = async () => {
+    if (!selStudent || !logForm.date) return;
+    setLogSaving(true);
+    const gd = {};
+    if (selectedGoal) {
+      gd.goalId = selectedGoal.id;
+      if (selectedGoal.goalType === "trials" && logForm.trials.length > 0) {
+        gd.trials = logForm.trials;
+        gd.correct = logForm.trials.filter(t => t==="C").length;
+        gd.incorrect = logForm.trials.filter(t => t==="I").length;
+      } else if (selectedGoal.goalType === "rubric" && logForm.rubricScore) {
+        gd.rubricScore = logForm.rubricScore;
+      } else if (selectedGoal.goalType === "pm" && logForm.pmScore !== "") {
+        gd.pmScore = Number(logForm.pmScore);
+      } else if (logForm.correct !== "") {
+        gd.correct = Number(logForm.correct);
+        gd.incorrect = Number(logForm.incorrect) || 0;
+      }
+    }
+    await saveSession({ id:uid(), studentId:selStudent, date:logForm.date, directMinutes:Number(logForm.directMinutes)||0, indirectMinutes:Number(logForm.indirectMinutes)||0, notes:logForm.notes, documented:logForm.documented===true, goalData:Object.keys(gd).length>0?gd:undefined });
+    setLogSaving(false);
+    setLogSaved(true);
+    setTimeout(() => setLogSaved(false), 2500);
+    setLogForm(f => ({...f, directMinutes:"", indirectMinutes:"", notes:"", trials:[], correct:"", incorrect:"", rubricScore:"", pmScore:"", documented:null}));
+  };
+
   return (
     <div>
       {/* Student + Goal selector */}
@@ -2307,8 +2385,112 @@ function GoalProgressPage({ students, sessions }) {
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="ch">
               <span className="ct">{student.name} — {selectedGoal ? (selectedGoal.description ? (selectedGoal.description.length>35?selectedGoal.description.slice(0,35)+"…":selectedGoal.description) : "Goal") : "Goal"}</span>
-              <span className={`bdg ${isRubric ? "bdg-r" : isPM ? "bdg-n" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : isPM ? "📏 PM" : "🔢 Trials"}</span>
+              <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                <span className={`bdg ${isRubric ? "bdg-r" : isPM ? "bdg-n" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : isPM ? "📏 PM" : "🔢 Trials"}</span>
+                <button className="btn btn-p btn-sm" onClick={() => { setShowLogPanel(p => !p); setLogForm(f => ({...f, date:todayStr()})); }}>
+                  {showLogPanel ? "✕ Cancel" : "+ Log Data"}
+                </button>
+                {logSaved && <span className="bdg bdg-g">Saved!</span>}
+              </div>
             </div>
+            {/* Quick Log Panel */}
+            {showLogPanel && (
+              <div style={{ padding:"16px 18px", borderBottom:"1px solid var(--bdr)", background:"#f5faf7" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--pri)", textTransform:"uppercase", letterSpacing:".06em", marginBottom:12 }}>Log Session Data</div>
+                <div className="fr" style={{ marginBottom:12 }}>
+                  <div className="fg" style={{ marginBottom:0 }}>
+                    <label className="fl">Date *</label>
+                    <input type="date" className="fc" value={logForm.date} onChange={e => setLF("date", e.target.value)} />
+                  </div>
+                  <div className="fg" style={{ marginBottom:0 }}>
+                    <label className="fl">Direct Min</label>
+                    <input type="number" className="fc" placeholder="0" value={logForm.directMinutes} onChange={e => setLF("directMinutes", e.target.value)} />
+                  </div>
+                  <div className="fg" style={{ marginBottom:0 }}>
+                    <label className="fl">Indirect Min</label>
+                    <input type="number" className="fc" placeholder="0" value={logForm.indirectMinutes} onChange={e => setLF("indirectMinutes", e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Goal-type specific data entry */}
+                {isTrials && (
+                  <div style={{ marginBottom:12 }}>
+                    <label className="fl" style={{ marginBottom:8 }}>Trials (tap to record)</label>
+                    <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+                      <button className="btn btn-p" style={{ flex:1, background:"var(--grn)", justifyContent:"center" }}
+                        onClick={() => setLF("trials", [...logForm.trials, "C"])}>
+                        ✓ Correct
+                      </button>
+                      <button className="btn btn-d" style={{ flex:1, justifyContent:"center" }}
+                        onClick={() => setLF("trials", [...logForm.trials, "I"])}>
+                        ✗ Incorrect
+                      </button>
+                      {logForm.trials.length > 0 && (
+                        <button className="btn btn-g" onClick={() => setLF("trials", logForm.trials.slice(0,-1))}>↩</button>
+                      )}
+                    </div>
+                    {logForm.trials.length > 0 && (
+                      <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:6 }}>
+                        {logForm.trials.map((t,i) => (
+                          <span key={i} style={{ width:28, height:28, borderRadius:"50%", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700,
+                            background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)",
+                            color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
+                        ))}
+                      </div>
+                    )}
+                    {logForm.trials.length > 0 && (
+                      <div style={{ fontSize:12, color:"var(--txt2)" }}>
+                        {logForm.trials.filter(t=>t==="C").length}/{logForm.trials.length} correct
+                        ({Math.round(logForm.trials.filter(t=>t==="C").length/logForm.trials.length*100)}%)
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isRubric && (
+                  <div className="fg" style={{ marginBottom:12 }}>
+                    <label className="fl">Rubric Score</label>
+                    <select className="fc" value={logForm.rubricScore} onChange={e => setLF("rubricScore", e.target.value)}>
+                      <option value="">Select level...</option>
+                      {(selectedGoal.rubricLevels||[]).map((lvl,i) => <option key={i} value={lvl}>{lvl}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {isPM && (
+                  <div className="fg" style={{ marginBottom:12 }}>
+                    <label className="fl">PM Score{selectedGoal.pmGoalScore ? ` (goal: ${selectedGoal.pmGoalScore})` : ""}</label>
+                    <input type="number" className="fc" placeholder="Enter score..." value={logForm.pmScore} onChange={e => setLF("pmScore", e.target.value)} />
+                    {logForm.pmScore !== "" && selectedGoal.pmGoalScore && (
+                      <div style={{ fontSize:12, marginTop:4, color: Number(logForm.pmScore)>=Number(selectedGoal.pmGoalScore)?"var(--grn)":"var(--ora)" }}>
+                        {Number(logForm.pmScore)>=Number(selectedGoal.pmGoalScore) ? "Goal met!" : `${Number(selectedGoal.pmGoalScore)-Number(logForm.pmScore)} away from goal`}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="fg" style={{ marginBottom:10 }}>
+                  <label className="fl">Notes</label>
+                  <textarea className="fc" rows={2} placeholder="Optional session notes..." value={logForm.notes} onChange={e => setLF("notes", e.target.value)} />
+                </div>
+
+                <div style={{ display:"flex", gap:8, alignItems:"center", justifyContent:"space-between", flexWrap:"wrap" }}>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => setLF("documented", logForm.documented===true?null:true)}
+                      style={{ padding:"7px 12px", borderRadius:8, border:"2px solid", fontFamily:"inherit", fontSize:12, fontWeight:600, cursor:"pointer",
+                        borderColor:logForm.documented===true?"var(--grn)":"var(--bdr)",
+                        background:logForm.documented===true?"#d1f5e5":"var(--inp)",
+                        color:logForm.documented===true?"var(--grn)":"var(--txt2)" }}>
+                      {logForm.documented===true ? "✅ Documented" : "⬜ Mark documented"}
+                    </button>
+                  </div>
+                  <button className="btn btn-p" onClick={handleQuickLog} disabled={!logForm.date || logSaving} style={{ minWidth:120, justifyContent:"center" }}>
+                    {logSaving ? "Saving…" : "Save Session"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="cb" style={{ paddingBottom: 14 }}>
               {selectedGoal?.description ? (
                 <div style={{ fontSize: 13.5, color: "var(--txt)", lineHeight: 1.65, padding: "10px 14px", background: "var(--inp)", borderRadius: 9, marginBottom: 14 }}>
@@ -2513,6 +2695,597 @@ function GoalProgressPage({ students, sessions }) {
             )}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   EVALUATION CHECKLISTS BY CATEGORY
+══════════════════════════════════════ */
+const EVAL_TEMPLATES = {
+  "SLD": {
+    label: "Specific Learning Disability",
+    color: "#1d4ed8", bg: "#dbeafe",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations & IEPs", "Gather teacher input/rating scales", "Review intervention data (RTI/MTSS)", "Review attendance and disciplinary records", "Gather parent input"] },
+      { title: "Cognitive Assessment", subtasks: ["Select appropriate cognitive battery", "Administer cognitive assessment", "Score and interpret results", "Document processing strengths/weaknesses"] },
+      { title: "Academic Achievement", subtasks: ["Administer reading assessment", "Administer math assessment", "Administer written expression assessment", "Compare achievement to cognitive ability"] },
+      { title: "Processing Assessment", subtasks: ["Assess phonological processing", "Assess working memory", "Assess processing speed", "Assess executive functioning if needed"] },
+      { title: "Classroom Observation", subtasks: ["Observe in primary area of concern", "Complete structured observation form", "Document academic engagement"] },
+      { title: "Eligibility Determination", subtasks: ["Apply pattern of strengths and weaknesses (PSW) or discrepancy model", "Rule out exclusionary factors", "Document adverse educational impact", "Write eligibility summary"] },
+      { title: "Report Writing", subtasks: ["Draft evaluation report", "Peer review / supervisor review", "Finalize and sign report"] },
+      { title: "Eligibility Meeting", subtasks: ["Schedule eligibility meeting", "Notify parents (10-day notice)", "Prepare present levels and recommendations", "Hold meeting and document outcomes"] },
+    ]
+  },
+  "ASD": {
+    label: "Autism Spectrum Disorder",
+    color: "#065f46", bg: "#d1f5e5",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Gather teacher/parent input", "Review medical/diagnostic history", "Collect developmental history"] },
+      { title: "Autism-Specific Rating Scales", subtasks: ["Administer GARS / CARS / BASC-3 BESS", "Administer parent rating scale", "Administer teacher rating scale"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer nonverbal cognitive measure if needed", "Document cognitive profile"] },
+      { title: "Adaptive Behavior Assessment", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent/teacher report", "Assess communication, daily living, socialization"] },
+      { title: "Social/Communication Assessment", subtasks: ["Assess social communication skills", "Assess pragmatic language", "Referral to SLP if needed"] },
+      { title: "Structured Observation", subtasks: ["Observe in structured setting", "Observe in unstructured/social setting", "Document restricted/repetitive behaviors"] },
+      { title: "Eligibility Determination", subtasks: ["Confirm meets ASD criteria under IDEA", "Rule out exclusionary factors", "Document adverse educational impact"] },
+      { title: "Report & Meeting", subtasks: ["Write evaluation report", "Schedule eligibility meeting", "Present findings to team", "Document outcomes"] },
+    ]
+  },
+  "OHI": {
+    label: "Other Health Impairment",
+    color: "#9a3412", bg: "#fed7aa",
+    components: [
+      { title: "Medical Documentation", subtasks: ["Obtain physician/specialist diagnosis", "Review medical records", "Document health condition and impact"] },
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Gather teacher input", "Review attendance/academic records"] },
+      { title: "Cognitive Assessment (if needed)", subtasks: ["Determine if cognitive assessment is warranted", "Administer appropriate battery", "Document results"] },
+      { title: "Academic Achievement", subtasks: ["Assess academic performance", "Document discrepancy from health condition"] },
+      { title: "Health Impact Assessment", subtasks: ["Document how condition affects alertness/energy", "Assess medication side effects impact", "Gather parent input on functional limitations"] },
+      { title: "Classroom Observation", subtasks: ["Observe student in classroom", "Note attention and stamina"] },
+      { title: "Eligibility Determination", subtasks: ["Confirm diagnosis from licensed physician", "Document limited strength/vitality/alertness", "Show adverse educational impact"] },
+      { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
+    ]
+  },
+  "ED": {
+    label: "Emotional Disturbance",
+    color: "#7c3aed", bg: "#f0eaff",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations & records", "Review disciplinary history", "Gather teacher input", "Review attendance patterns"] },
+      { title: "Social-Emotional Rating Scales", subtasks: ["Administer BASC-3 (parent, teacher, self-report)", "Administer BRIEF-2 if executive functioning concern", "Administer behavior intervention data"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer cognitive battery", "Assess working memory and processing speed"] },
+      { title: "Academic Achievement", subtasks: ["Assess current academic performance", "Compare to potential given cognitive findings"] },
+      { title: "Social-Emotional Functioning", subtasks: ["Assess emotional regulation", "Assess interpersonal relationships", "Review mental health history/diagnoses"] },
+      { title: "Observation", subtasks: ["Observe in classroom", "Observe in unstructured settings", "Complete functional behavioral assessment (FBA) if needed"] },
+      { title: "Exclusionary Factors", subtasks: ["Rule out social maladjustment as primary factor", "Rule out cultural/linguistic differences", "Rule out lack of instruction"] },
+      { title: "Eligibility & Report", subtasks: ["Apply criteria (5 characteristics, chronic nature)", "Document adverse educational impact", "Write report and schedule meeting"] },
+    ]
+  },
+  "ID": {
+    label: "Intellectual Disability",
+    color: "#be185d", bg: "#fce7f3",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review prior evaluations", "Review developmental history", "Gather teacher input", "Collect parent input"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer comprehensive cognitive battery", "Document intellectual functioning (FSIQ or composite)", "Assess all cognitive domains"] },
+      { title: "Adaptive Behavior Assessment", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent interview/rating", "Gather teacher rating", "Document conceptual, social, practical skills"] },
+      { title: "Academic Achievement", subtasks: ["Assess academic skills", "Document functional academic skills"] },
+      { title: "Transition Assessment (age 14+)", subtasks: ["Assess vocational interests", "Assess independent living skills", "Document transition needs"] },
+      { title: "Observation", subtasks: ["Observe in academic setting", "Observe in social/functional setting"] },
+      { title: "Eligibility Determination", subtasks: ["Confirm significant limitations in intellectual functioning (2+ SD below mean)", "Confirm significant adaptive behavior deficits", "Confirm onset before age 18", "Rule out exclusionary factors"] },
+      { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
+    ]
+  },
+  "SLI": {
+    label: "Speech/Language Impairment",
+    color: "#0369a1", bg: "#e0f2fe",
+    components: [
+      { title: "Referral & Background", subtasks: ["Review referral reason", "Gather teacher input", "Collect developmental/medical history", "Review prior speech services"] },
+      { title: "Articulation/Phonology", subtasks: ["Administer standardized articulation test", "Conduct phonological process analysis", "Assess intelligibility in connected speech"] },
+      { title: "Language Assessment", subtasks: ["Administer receptive language measure", "Administer expressive language measure", "Assess vocabulary and semantics", "Assess morphology and syntax"] },
+      { title: "Fluency Assessment (if applicable)", subtasks: ["Assess disfluency rate and type", "Conduct fluency observation"] },
+      { title: "Voice Assessment (if applicable)", subtasks: ["Assess voice quality and resonance", "Referral to ENT if indicated"] },
+      { title: "Pragmatic/Social Language", subtasks: ["Assess conversational skills", "Assess narrative language"] },
+      { title: "Eligibility Determination", subtasks: ["Apply state criteria for SLI", "Document adverse educational impact", "Rule out exclusionary factors"] },
+      { title: "Report & Meeting", subtasks: ["Complete evaluation report", "Schedule eligibility meeting", "Present findings and recommendations"] },
+    ]
+  },
+  "DD": {
+    label: "Developmental Delay",
+    color: "#a16207", bg: "#fef9c3",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review medical records", "Gather parent developmental history", "Collect prior evaluation data", "Review early intervention records"] },
+      { title: "Developmental Assessment", subtasks: ["Administer developmental battery (Battelle, Bayley, etc.)", "Assess all developmental domains"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer age-appropriate cognitive measure", "Document cognitive profile"] },
+      { title: "Adaptive Behavior", subtasks: ["Administer adaptive behavior measure", "Gather parent and teacher ratings"] },
+      { title: "Motor Assessment (if applicable)", subtasks: ["Referral to OT/PT if motor concerns", "Document fine and gross motor functioning"] },
+      { title: "Communication Assessment", subtasks: ["SLP referral if communication concerns", "Document receptive and expressive communication"] },
+      { title: "Observation", subtasks: ["Observe in educational setting", "Document age-appropriate behavior"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm delay in one or more developmental areas", "Note: DD eligibility typically ends at age 9", "Write report and schedule meeting"] },
+    ]
+  },
+  "TBI": {
+    label: "Traumatic Brain Injury",
+    color: "#c2410c", bg: "#ffedd5",
+    components: [
+      { title: "Medical Documentation", subtasks: ["Obtain medical records documenting TBI", "Review neuropsychological evaluation if available", "Document pre-injury functioning"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer comprehensive cognitive battery", "Assess processing speed and working memory", "Assess executive functioning (BRIEF-2)"] },
+      { title: "Academic Achievement", subtasks: ["Compare current performance to pre-injury levels", "Assess all academic domains"] },
+      { title: "Memory & Attention", subtasks: ["Administer memory assessment", "Assess sustained and selective attention"] },
+      { title: "Behavioral/Emotional", subtasks: ["Administer behavior rating scales (BASC-3)", "Assess emotional regulation", "Screen for PTSD/anxiety if indicated"] },
+      { title: "Adaptive Functioning", subtasks: ["Assess daily living skills", "Assess social functioning"] },
+      { title: "Observation", subtasks: ["Observe in classroom", "Note fatigue patterns and functional impact"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm open/closed head injury documentation", "Document adverse educational impact due to TBI", "Write report and schedule meeting"] },
+    ]
+  },
+  "HI": {
+    label: "Hearing Impairment",
+    color: "#0f766e", bg: "#ccfbf1",
+    components: [
+      { title: "Audiological Evaluation", subtasks: ["Obtain current audiogram from audiologist", "Document type and degree of hearing loss", "Assess hearing aid/cochlear implant use"] },
+      { title: "Review of Existing Data", subtasks: ["Review medical records", "Gather teacher input", "Review communication history"] },
+      { title: "Communication Assessment", subtasks: ["Assess oral/auditory communication", "Assess sign language if applicable", "SLP assessment of receptive/expressive language"] },
+      { title: "Academic Achievement", subtasks: ["Administer academic battery (nonverbal if needed)", "Assess reading and written expression"] },
+      { title: "Cognitive Assessment", subtasks: ["Use nonverbal cognitive measure if appropriate", "Document cognitive profile"] },
+      { title: "Functional Hearing Assessment", subtasks: ["Assess hearing in educational environment", "Evaluate need for FM system/assistive technology"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm documented hearing impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
+    ]
+  },
+  "VI": {
+    label: "Visual Impairment",
+    color: "#1e3a5f", bg: "#dbeafe",
+    components: [
+      { title: "Ophthalmological Evaluation", subtasks: ["Obtain current eye exam from eye specialist", "Document visual acuity and field", "Assess low vision aids if applicable"] },
+      { title: "Functional Vision Assessment", subtasks: ["Conduct functional vision assessment (TVI)", "Assess visual efficiency in academic tasks"] },
+      { title: "Learning Media Assessment", subtasks: ["Determine primary learning medium (print, braille, both)", "Assess braille readiness if applicable"] },
+      { title: "Cognitive Assessment", subtasks: ["Use appropriate cognitive measure (verbal subtests if needed)", "Document cognitive profile"] },
+      { title: "Academic Achievement", subtasks: ["Adapt assessments for visual impairment", "Assess reading and academic skills in preferred medium"] },
+      { title: "Orientation & Mobility", subtasks: ["O&M specialist assessment if applicable", "Document travel and orientation needs"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm documented visual impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
+    ]
+  },
+  "OI": {
+    label: "Orthopedic Impairment",
+    color: "#6b21a8", bg: "#f3e8ff",
+    components: [
+      { title: "Medical Documentation", subtasks: ["Obtain medical documentation of orthopedic condition", "Review physical therapy records", "Document functional limitations"] },
+      { title: "OT/PT Assessment", subtasks: ["OT evaluation of fine motor and daily living skills", "PT evaluation of mobility and gross motor skills", "Assess assistive technology needs"] },
+      { title: "Cognitive Assessment (if needed)", subtasks: ["Determine if cognitive assessment warranted", "Use adapted administration if needed"] },
+      { title: "Academic Achievement", subtasks: ["Adapt assessment for physical limitations", "Assess academic performance"] },
+      { title: "Functional Impact Assessment", subtasks: ["Document how condition affects school participation", "Assess fatigue and endurance"] },
+      { title: "Assistive Technology", subtasks: ["AT evaluation if communication/writing impacted", "Document AT needs and recommendations"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm documented orthopedic impairment", "Document adverse educational impact", "Write report and schedule meeting"] },
+    ]
+  },
+  "MD": {
+    label: "Multiple Disabilities",
+    color: "#374151", bg: "#f3f4f6",
+    components: [
+      { title: "Review of Existing Data", subtasks: ["Review all prior evaluations", "Gather input from all service providers", "Document all known diagnoses"] },
+      { title: "Cognitive Assessment", subtasks: ["Administer appropriate cognitive battery", "Use adapted/alternative assessment if needed", "Document all cognitive domains"] },
+      { title: "Adaptive Behavior", subtasks: ["Administer Vineland-3 or ABAS-3", "Gather parent and teacher ratings", "Document functional skills across settings"] },
+      { title: "Communication Assessment", subtasks: ["SLP assessment", "Assess AAC needs if applicable"] },
+      { title: "OT/PT Assessment", subtasks: ["OT evaluation if motor/sensory concerns", "PT evaluation if mobility concerns"] },
+      { title: "Functional & Academic Assessment", subtasks: ["Assess functional academics", "Document alternate assessment eligibility if applicable"] },
+      { title: "Behavioral Assessment (if needed)", subtasks: ["Conduct FBA if behavior is a concern", "Administer behavior rating scales"] },
+      { title: "Eligibility & Report", subtasks: ["Confirm two or more qualifying disabilities", "Document that needs cannot be met by single disability category", "Write report and schedule meeting"] },
+    ]
+  },
+};
+
+/* ══════════════════════════════════════
+   EVALUATIONS PAGE
+══════════════════════════════════════ */
+function EvaluationsPage({ students, saveStudent }) {
+  const [showModal, setShowModal] = useState(false);
+  const [editEvalId, setEditEvalId] = useState(null);
+  const [editStudentId, setEditStudentId] = useState(null);
+  const [expandedEval, setExpandedEval] = useState(null); // "studentId:evalId"
+  const [editingItem, setEditingItem] = useState(null);   // { studentId, evalId, itemIdx, subtaskIdx } or null
+  const [newSubtask, setNewSubtask] = useState("");
+  const [newItemTitle, setNewItemTitle] = useState("");
+  const [addingItem, setAddingItem] = useState(null);     // "studentId:evalId"
+  const [search, setSearch] = useState("");
+
+  // New eval form
+  const defaultEvalForm = () => ({
+    id: uid(),
+    studentId: "",
+    category: "",
+    dueDate: "",
+    startDate: "",
+    status: "In Progress",
+    notes: "",
+    checklist: [],
+  });
+  const [form, setForm] = useState(defaultEvalForm());
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  // Build flat list of all evaluations from all students
+  const allEvals = useMemo(() => {
+    const list = [];
+    students.forEach(s => {
+      (s.evaluations || []).forEach(ev => {
+        list.push({ ...ev, studentName: s.name, studentObj: s });
+      });
+    });
+    return list.sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+  }, [students]);
+
+  // Students due for re-eval (meetingType === "Reevaluation" and not completed)
+  const autoPopulated = useMemo(() =>
+    students.filter(s =>
+      s.meetingType === "Reevaluation" &&
+      s.meetingDueDate &&
+      !s.meetingCompleted &&
+      !(s.evaluations || []).some(ev => ev.autoPopulated)
+    ), [students]);
+
+  // Filter
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return allEvals.filter(ev =>
+      !q ||
+      ev.studentName.toLowerCase().includes(q) ||
+      (EVAL_TEMPLATES[ev.category]?.label || ev.category).toLowerCase().includes(q)
+    );
+  }, [allEvals, search]);
+
+  const statusColor = (s) => s === "Complete" ? "var(--grn)" : s === "In Progress" ? "var(--pri)" : "#9a6800";
+
+  // Save a modified student (updating their evaluations array)
+  const saveEval = async (studentId, updatedEval) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => ev.id === updatedEval.id ? updatedEval : ev);
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const deleteEval = async (studentId, evalId) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    await saveStudent({ ...st, evaluations: (st.evaluations || []).filter(ev => ev.id !== evalId) });
+  };
+
+  const toggleSubtask = async (studentId, evalId, itemIdx, subIdx) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => {
+      if (ev.id !== evalId) return ev;
+      const checklist = ev.checklist.map((item, ii) => {
+        if (ii !== itemIdx) return item;
+        const subtasks = item.subtasks.map((sub, si) =>
+          si === subIdx ? { ...sub, done: !sub.done } : sub
+        );
+        return { ...item, subtasks };
+      });
+      return { ...ev, checklist };
+    });
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const toggleItem = async (studentId, evalId, itemIdx) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => {
+      if (ev.id !== evalId) return ev;
+      const checklist = ev.checklist.map((item, ii) => {
+        if (ii !== itemIdx) return item;
+        const allDone = item.subtasks.every(s => s.done);
+        return { ...item, subtasks: item.subtasks.map(s => ({ ...s, done: !allDone })) };
+      });
+      return { ...ev, checklist };
+    });
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const addSubtaskToItem = async (studentId, evalId, itemIdx, text) => {
+    if (!text.trim()) return;
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => {
+      if (ev.id !== evalId) return ev;
+      const checklist = ev.checklist.map((item, ii) =>
+        ii !== itemIdx ? item : { ...item, subtasks: [...item.subtasks, { text: text.trim(), done: false }] }
+      );
+      return { ...ev, checklist };
+    });
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const deleteSubtask = async (studentId, evalId, itemIdx, subIdx) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => {
+      if (ev.id !== evalId) return ev;
+      const checklist = ev.checklist.map((item, ii) =>
+        ii !== itemIdx ? item : { ...item, subtasks: item.subtasks.filter((_, si) => si !== subIdx) }
+      );
+      return { ...ev, checklist };
+    });
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const addChecklistItem = async (studentId, evalId, title) => {
+    if (!title.trim()) return;
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev =>
+      ev.id !== evalId ? ev : { ...ev, checklist: [...ev.checklist, { title: title.trim(), subtasks: [] }] }
+    );
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const updateStatus = async (studentId, evalId, status) => {
+    const st = students.find(s => s.id === studentId);
+    if (!st) return;
+    const evals = (st.evaluations || []).map(ev => ev.id === evalId ? { ...ev, status } : ev);
+    await saveStudent({ ...st, evaluations: evals });
+  };
+
+  const handleAddAutoPopulated = async (s) => {
+    const ev = {
+      id: uid(), studentId: s.id, category: s.studentType === "504" ? "OHI" : "SLD",
+      dueDate: s.meetingDueDate, startDate: todayStr(), status: "In Progress", notes: "", autoPopulated: true,
+      checklist: (EVAL_TEMPLATES["SLD"]?.components || []).map(c => ({
+        title: c.title, subtasks: c.subtasks.map(t => ({ text: t, done: false }))
+      }))
+    };
+    await saveStudent({ ...s, evaluations: [...(s.evaluations || []), ev] });
+  };
+
+  const handleOpenNew = (studentId = "") => {
+    setForm({ ...defaultEvalForm(), studentId });
+    setEditEvalId(null);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.studentId || !form.category) return;
+    const st = students.find(s => s.id === form.studentId);
+    if (!st) return;
+    const template = EVAL_TEMPLATES[form.category];
+    const checklist = template
+      ? template.components.map(c => ({ title: c.title, subtasks: c.subtasks.map(t => ({ text: t, done: false })) }))
+      : [];
+    const ev = { id: form.id || uid(), studentId: form.studentId, category: form.category, dueDate: form.dueDate, startDate: form.startDate || todayStr(), status: form.status, notes: form.notes, checklist };
+    const existingEvals = (st.evaluations || []).filter(e => e.id !== ev.id);
+    await saveStudent({ ...st, evaluations: [...existingEvals, ev] });
+    setShowModal(false);
+  };
+
+  return (
+    <div>
+      {/* Top bar */}
+      <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
+        <div style={{ position:"relative", flex:"1 1 160px", minWidth:140 }}>
+          <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", fontSize:13, opacity:.45, pointerEvents:"none" }}>&#x1F50D;</span>
+          <input className="fc" style={{ paddingLeft:30 }} placeholder="Search student or category..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        {search && <button onClick={() => setSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>×</button>}
+        <button className="btn btn-p" onClick={() => handleOpenNew()}>+ New Evaluation</button>
+      </div>
+
+      {/* Auto-populated notice */}
+      {autoPopulated.length > 0 && (
+        <div style={{ background:"#fef6cd", border:"1.5px solid #f0d060", borderRadius:10, padding:"12px 16px", marginBottom:16 }}>
+          <div style={{ fontWeight:600, color:"var(--yel)", marginBottom:8, fontSize:13 }}>
+            📋 {autoPopulated.length} student{autoPopulated.length !== 1 ? "s" : ""} due for re-evaluation
+          </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+            {autoPopulated.map(s => (
+              <div key={s.id} style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", borderRadius:8, padding:"7px 12px", border:"1px solid #f0d060" }}>
+                <span style={{ fontWeight:600, fontSize:13 }}>{s.name}</span>
+                <span style={{ fontSize:12, color:"var(--txt2)" }}>Due: {s.meetingDueDate}</span>
+                <button className="btn btn-sm" style={{ background:"#1a5e38", color:"#fff", fontSize:12 }} onClick={() => handleOpenNew(s.id)}>
+                  Start Eval
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Eval cards */}
+      {filtered.length === 0 ? (
+        <div className="empty"><div className="empty-i">🔍</div><p>No evaluations yet.<br />Click "+ New Evaluation" to start one.</p></div>
+      ) : (
+        filtered.map(ev => {
+          const template = EVAL_TEMPLATES[ev.category];
+          const expandKey = `${ev.studentId}:${ev.id}`;
+          const isExpanded = expandedEval === expandKey;
+          const totalSubs = ev.checklist.reduce((n, item) => n + item.subtasks.length, 0);
+          const doneSubs = ev.checklist.reduce((n, item) => n + item.subtasks.filter(s => s.done).length, 0);
+          const pct = totalSubs > 0 ? Math.round((doneSubs / totalSubs) * 100) : 0;
+
+          return (
+            <div key={ev.id} className="card" style={{ marginBottom:12, border:`1.5px solid ${template?.bg || "var(--bdr)"}` }}>
+              {/* Card header */}
+              <div className="ch" style={{ background: template?.bg || "var(--inp)", cursor:"pointer" }}
+                onClick={() => setExpandedEval(isExpanded ? null : expandKey)}>
+                <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                    <strong style={{ fontSize:15 }}>{ev.studentName}</strong>
+                    <span className="bdg" style={{ background: template?.bg || "var(--inp)", color: template?.color || "var(--txt2)", border:`1px solid ${template?.color || "var(--bdr)"}`, fontSize:11 }}>
+                      {template?.label || ev.category}
+                    </span>
+                    <span className="bdg" style={{ background: ev.status==="Complete"?"#d1f5e5":ev.status==="In Progress"?"#dbeafe":"#fef6cd", color: statusColor(ev.status), fontSize:11 }}>
+                      {ev.status}
+                    </span>
+                    {ev.dueDate && <span style={{ fontSize:12, color:"var(--txt2)" }}>Due: {ev.dueDate}</span>}
+                  </div>
+                  {/* Progress bar */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:4 }}>
+                    <div style={{ flex:1, height:6, background:"rgba(0,0,0,.1)", borderRadius:3, overflow:"hidden" }}>
+                      <div style={{ width:`${pct}%`, height:"100%", background: pct===100?"var(--grn)":template?.color||"var(--pri)", borderRadius:3, transition:"width .3s" }} />
+                    </div>
+                    <span style={{ fontSize:11, fontWeight:600, color:"var(--txt2)", whiteSpace:"nowrap" }}>{doneSubs}/{totalSubs} ({pct}%)</span>
+                  </div>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                  <select className="fc" style={{ fontSize:12, padding:"4px 8px", width:"auto" }}
+                    value={ev.status}
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => { e.stopPropagation(); updateStatus(ev.studentId, ev.id, e.target.value); }}>
+                    <option>In Progress</option>
+                    <option>On Hold</option>
+                    <option>Complete</option>
+                  </select>
+                  <span style={{ fontSize:14, color:"var(--txt2)" }}>{isExpanded ? "▲" : "▼"}</span>
+                </div>
+              </div>
+
+              {/* Expanded checklist */}
+              {isExpanded && (
+                <div className="cb">
+                  {ev.notes && (
+                    <div style={{ fontSize:13, color:"var(--txt2)", background:"var(--inp)", borderRadius:8, padding:"8px 12px", marginBottom:14 }}>
+                      📝 {ev.notes}
+                    </div>
+                  )}
+
+                  {ev.checklist.map((item, ii) => {
+                    const itemDone = item.subtasks.length > 0 && item.subtasks.every(s => s.done);
+                    const itemPct = item.subtasks.length > 0 ? Math.round(item.subtasks.filter(s => s.done).length / item.subtasks.length * 100) : 0;
+                    const editKey = `${ev.studentId}:${ev.id}:${ii}`;
+
+                    return (
+                      <div key={ii} style={{ marginBottom:10, border:"1px solid var(--bdr)", borderRadius:9, overflow:"hidden" }}>
+                        {/* Item header */}
+                        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 13px", background: itemDone ? "#f0fdf4" : "var(--inp)", borderBottom: "1px solid var(--bdr)" }}>
+                          <button onClick={() => toggleItem(ev.studentId, ev.id, ii)}
+                            style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, padding:0, lineHeight:1, flexShrink:0 }}>
+                            {itemDone ? "✅" : "⬜"}
+                          </button>
+                          <span style={{ fontWeight:600, fontSize:13.5, flex:1, color: itemDone ? "var(--grn)" : "var(--txt)", textDecoration: itemDone?"line-through":"none" }}>
+                            {item.title}
+                          </span>
+                          <span style={{ fontSize:11, color:"var(--txt2)", whiteSpace:"nowrap" }}>
+                            {item.subtasks.filter(s=>s.done).length}/{item.subtasks.length}
+                          </span>
+                        </div>
+
+                        {/* Subtasks */}
+                        <div style={{ padding:"8px 13px 10px" }}>
+                          {item.subtasks.map((sub, si) => (
+                            <div key={si} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom: si < item.subtasks.length-1 ? "1px solid #edf4f0" : "none" }}>
+                              <button onClick={() => toggleSubtask(ev.studentId, ev.id, ii, si)}
+                                style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, padding:0, lineHeight:1, flexShrink:0 }}>
+                                {sub.done ? "✅" : "⬜"}
+                              </button>
+                              <span style={{ flex:1, fontSize:13, color: sub.done ? "var(--txt2)" : "var(--txt)", textDecoration: sub.done?"line-through":"none" }}>
+                                {sub.text}
+                              </span>
+                              <button onClick={() => deleteSubtask(ev.studentId, ev.id, ii, si)}
+                                style={{ background:"none", border:"none", cursor:"pointer", fontSize:14, color:"#ccc", padding:"0 2px", lineHeight:1 }}
+                                title="Delete subtask">×</button>
+                            </div>
+                          ))}
+
+                          {/* Add subtask inline */}
+                          {editingItem === editKey ? (
+                            <div style={{ display:"flex", gap:6, marginTop:8 }}>
+                              <input className="fc" style={{ flex:1, fontSize:13, padding:"7px 10px" }}
+                                placeholder="Add subtask..."
+                                value={newSubtask}
+                                onChange={e => setNewSubtask(e.target.value)}
+                                onKeyDown={e => { if(e.key==="Enter"){ addSubtaskToItem(ev.studentId, ev.id, ii, newSubtask); setNewSubtask(""); setEditingItem(null); }}}
+                                autoFocus />
+                              <button className="btn btn-p btn-sm" onClick={() => { addSubtaskToItem(ev.studentId, ev.id, ii, newSubtask); setNewSubtask(""); setEditingItem(null); }}>Add</button>
+                              <button className="btn btn-g btn-sm" onClick={() => { setEditingItem(null); setNewSubtask(""); }}>Cancel</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setEditingItem(editKey); setNewSubtask(""); }}
+                              style={{ background:"none", border:"1.5px dashed var(--bdr)", borderRadius:7, cursor:"pointer", fontSize:12, color:"var(--txt2)", padding:"5px 10px", marginTop:6, width:"100%", textAlign:"left", fontFamily:"inherit" }}>
+                              + Add subtask
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Add new checklist item */}
+                  {addingItem === expandKey ? (
+                    <div style={{ display:"flex", gap:6, marginTop:4 }}>
+                      <input className="fc" style={{ flex:1, fontSize:13 }}
+                        placeholder="New checklist section title..."
+                        value={newItemTitle}
+                        onChange={e => setNewItemTitle(e.target.value)}
+                        onKeyDown={e => { if(e.key==="Enter"){ addChecklistItem(ev.studentId, ev.id, newItemTitle); setNewItemTitle(""); setAddingItem(null); }}}
+                        autoFocus />
+                      <button className="btn btn-p btn-sm" onClick={() => { addChecklistItem(ev.studentId, ev.id, newItemTitle); setNewItemTitle(""); setAddingItem(null); }}>Add</button>
+                      <button className="btn btn-g btn-sm" onClick={() => { setAddingItem(null); setNewItemTitle(""); }}>Cancel</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setAddingItem(expandKey)}
+                      style={{ background:"none", border:"2px dashed var(--bdr)", borderRadius:9, cursor:"pointer", fontSize:13, color:"var(--txt2)", padding:"9px 14px", width:"100%", textAlign:"left", fontFamily:"inherit", marginTop:4 }}>
+                      + Add checklist section
+                    </button>
+                  )}
+
+                  {/* Card actions */}
+                  <div style={{ display:"flex", gap:8, marginTop:14, justifyContent:"flex-end" }}>
+                    <button className="btn btn-d btn-sm" onClick={() => { if(confirm("Delete this evaluation?")) deleteEval(ev.studentId, ev.id); }}>Delete Eval</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+
+      {/* New Evaluation Modal */}
+      {showModal && (
+        <div className="mo" onClick={() => setShowModal(false)}>
+          <div className="md" onClick={e => e.stopPropagation()}>
+            <div className="mh">
+              <span className="mt2">New Evaluation</span>
+              <button className="xbtn" onClick={() => setShowModal(false)}>×</button>
+            </div>
+            <div className="mb2">
+              <div className="fg">
+                <label className="fl">Student *</label>
+                <select className="fc" value={form.studentId} onChange={e => setF("studentId", e.target.value)}>
+                  <option value="">Select student...</option>
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="fg">
+                <label className="fl">Disability Category *</label>
+                <select className="fc" value={form.category} onChange={e => setF("category", e.target.value)}>
+                  <option value="">Select category...</option>
+                  {Object.entries(EVAL_TEMPLATES).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label} ({k})</option>
+                  ))}
+                </select>
+                {form.category && EVAL_TEMPLATES[form.category] && (
+                  <div style={{ marginTop:8, fontSize:12, color:"var(--txt2)", background:"var(--inp)", borderRadius:7, padding:"8px 10px" }}>
+                    Will auto-generate {EVAL_TEMPLATES[form.category].components.length} checklist sections with {EVAL_TEMPLATES[form.category].components.reduce((n,c)=>n+c.subtasks.length,0)} tasks.
+                  </div>
+                )}
+              </div>
+              <div className="fr">
+                <div className="fg">
+                  <label className="fl">Start Date</label>
+                  <input type="date" className="fc" value={form.startDate} onChange={e => setF("startDate", e.target.value)} />
+                </div>
+                <div className="fg">
+                  <label className="fl">Due Date</label>
+                  <input type="date" className="fc" value={form.dueDate} onChange={e => setF("dueDate", e.target.value)} />
+                </div>
+              </div>
+              <div className="fg">
+                <label className="fl">Notes (optional)</label>
+                <textarea className="fc" rows={2} placeholder="Any notes about this evaluation..." value={form.notes} onChange={e => setF("notes", e.target.value)} />
+              </div>
+            </div>
+            <div className="mf">
+              <button className="btn btn-g" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="btn btn-p" onClick={handleSubmit} disabled={!form.studentId || !form.category}>
+                Create Evaluation
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
