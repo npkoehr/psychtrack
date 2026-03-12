@@ -1,4 +1,4 @@
-const CACHE = "mhtrack-v3";
+const CACHE = "mhtrack-v5";
 const ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
