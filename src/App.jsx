@@ -173,7 +173,7 @@ const CSS = `
   --inp:#edf4f0;--shd:0 2px 12px rgba(20,50,35,.08);--shd2:0 6px 28px rgba(20,50,35,.13)
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
-.app{display:flex;min-height:100vh}
+.app{display:flex;min-height:100vh;align-items:flex-start}
 
 /* ── Login Screen ── */
 .login-wrap{min-height:100vh;background:var(--sidebar);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
@@ -208,7 +208,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font
 .sb-foot{padding:12px 9px;border-top:1px solid rgba(255,255,255,.07)}
 
 /* ── Main ── */
-.main{margin-left:210px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.main{margin-left:210px;flex:1;min-height:100vh}
 .topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 6px rgba(20,50,35,.06)}
 .topbar h2{font-family:'Lora',serif;font-size:19px;font-weight:600}
 .topbar-r{display:flex;gap:10px;align-items:center}
@@ -302,8 +302,8 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Mobile responsive ── */
-html{overflow-y:scroll}
-body{overflow-x:hidden;max-width:100%}
+html,body{height:auto;overflow-x:hidden}
+body{min-height:100vh}
 .sg4{grid-template-columns:repeat(4,1fr)}
 
 @media(max-width:700px){
