@@ -809,16 +809,16 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
         <button
           onClick={() => addTrial("C")}
           style={{ padding:"18px 0", borderRadius:12, border:"none", background:"var(--grn)", color:"#fff", fontSize:17, fontWeight:700, cursor:"pointer", boxShadow:"0 4px 14px rgba(31,110,74,.3)", fontFamily:"inherit", transition:"transform .1s, box-shadow .1s" }}
-          onMouseDown={e => e.currentTarget.style.transform="scale(.96)"}
-          onMouseUp={e => e.currentTarget.style.transform="scale(1)"}
+          onMouseDown={e => { e.currentTarget.style.transform="scale(.96)"; }}
+          onMouseUp={e => { e.currentTarget.style.transform="scale(1)"; }}
         >
           ✅ Correct
         </button>
         <button
           onClick={() => addTrial("I")}
           style={{ padding:"18px 0", borderRadius:12, border:"none", background:"var(--red)", color:"#fff", fontSize:17, fontWeight:700, cursor:"pointer", boxShadow:"0 4px 14px rgba(184,50,50,.3)", fontFamily:"inherit", transition:"transform .1s, box-shadow .1s" }}
-          onMouseDown={e => e.currentTarget.style.transform="scale(.96)"}
-          onMouseUp={e => e.currentTarget.style.transform="scale(1)"}
+          onMouseDown={e => { e.currentTarget.style.transform="scale(.96)"; }}
+          onMouseUp={e => { e.currentTarget.style.transform="scale(1)"; }}
         >
           ❌ Incorrect
         </button>
@@ -1032,8 +1032,8 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                       <div key={s.id}
                         onMouseDown={() => { setF("studentId", s.id); setF("goalId",""); setF("trials",[]); setStudentSearch(s.name); setShowSuggestions(false); }}
                         style={{ padding:"10px 14px", cursor:"pointer", fontSize:13, borderBottom:"1px solid var(--bdr)", display:"flex", alignItems:"center", gap:8 }}
-                        onMouseEnter={e => e.currentTarget.style.background="var(--inp)"}
-                        onMouseLeave={e => e.currentTarget.style.background="#fff"}>
+                        onMouseEnter={e => { e.currentTarget.style.background="var(--inp)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background="#fff"; }}>
                         <span style={{ fontWeight:600 }}>{s.name}</span>
                         {s.grade && <span style={{ fontSize:11, color:"var(--txt2)" }}>{s.grade}</span>}
                         {s.studentType && s.studentType!=="IEP" && <span className={`bdg ${s.studentType==="504"?"bdg-a":""}`} style={{ fontSize:10, ...(s.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{s.studentType}</span>}
@@ -1041,8 +1041,8 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                     ))}
                     <div onMouseDown={e => { e.preventDefault(); setF("studentId","guest::"+studentSearch.trim()); setStudentSearch(studentSearch.trim()); setShowSuggestions(false); }}
                       style={{ padding:"9px 14px", fontSize:12, color:"var(--txt2)", cursor:"pointer", background:"var(--inp)", display:"flex", alignItems:"center", gap:6 }}
-                      onMouseEnter={e => e.currentTarget.style.color="var(--pri)"}
-                      onMouseLeave={e => e.currentTarget.style.color="var(--txt2)"}>
+                      onMouseEnter={e => { e.currentTarget.style.color="var(--pri)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.color="var(--txt2)"; }}>
                       <span style={{ color:"var(--pri)", fontWeight:700 }}>+</span> Log for "{studentSearch}" (not on caseload)
                     </div>
                   </div>
