@@ -411,7 +411,7 @@ function LoginScreen({ onLogin }) {
         <div className="login-logo">
           <span className="login-lock">🔒</span>
           <h1>PsychTrack</h1>
-          <p>Caseload Manager · Secure Access</p>
+          <p>Caseload Manager . Secure Access</p>
         </div>
         <div className="fg">
           <label className="login-label">Password</label>
@@ -471,7 +471,7 @@ function ChangePasswordModal({ onClose }) {
       <div className="md" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div className="mh">
           <span className="mt2">🔐 Change Password</span>
-          <button className="xbtn" onClick={onClose}>×</button>
+          <button className="xbtn" onClick={onClose}>x</button>
         </div>
         <div className="mb2">
           {success ? (
@@ -677,7 +677,7 @@ export default function App() {
           <div className="topbar">
             <h2>{titles[page]}</h2>
             <div className="topbar-r">
-              <span className="sm muted">{realStudents.filter(s=>!s.studentType||s.studentType==="IEP").length} IEP · {realStudents.filter(s=>s.studentType==="504").length} 504 · {realStudents.filter(s=>s.studentType==="GenEd").length} GenEd · {sessions.length} sessions</span>
+              <span className="sm muted">{realStudents.filter(s=>!s.studentType||s.studentType==="IEP").length} IEP . {realStudents.filter(s=>s.studentType==="504").length} 504 . {realStudents.filter(s=>s.studentType==="GenEd").length} GenEd . {sessions.length} sessions</span>
               <button className="btn btn-xl btn-sm" onClick={() => exportToExcel(students, sessions)}>⬇️ Export Excel</button>
             </div>
           </div>
@@ -836,7 +836,7 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
             {/* Current session trials */}
             {trials.slice(-(trialSize - activePosStart > 0 ? trialSize - activePosStart : trialSize)).map((t, i) => (
               <div key={"cur-"+i} style={{ width:32, height:32, borderRadius:"50%", background: t === "C" ? "#d1f5e5" : "#fde0e0", border: t === "C" ? "2px solid var(--grn)" : "2px solid var(--red)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>
-                {t === "C" ? "✓" : "✗"}
+                {t === "C" ? "v" : "x"}
               </div>
             ))}
             {/* Empty remaining slots */}
@@ -856,10 +856,10 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
                     <span style={{ fontSize:13, fontWeight:700, color: pct >= 80 ? "var(--grn)" : "var(--red)" }}>{pct}%</span>
                     <div style={{ display:"flex", gap:3 }}>
                       {set.trials.map((t, ti) => (
-                        <span key={ti} style={{ fontSize:13 }}>{t === "C" ? "✓" : "✗"}</span>
+                        <span key={ti} style={{ fontSize:13 }}>{t === "C" ? "v" : "x"}</span>
                       ))}
                     </div>
-                    <span style={{ fontSize:11, color:"var(--txt2)", marginLeft:"auto" }}>Set complete ✓</span>
+                    <span style={{ fontSize:11, color:"var(--txt2)", marginLeft:"auto" }}>Set complete v</span>
                   </div>
                 );
               })}
@@ -998,7 +998,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
       <div className="card">
         <div className="ch">
           <span className="ct">Log Session</span>
-          {saved && <span className="bdg bdg-g">✓ Saved</span>}
+          {saved && <span className="bdg bdg-g">v Saved</span>}
         </div>
         <div className="cb">
           {/* Mode toggle */}
@@ -1043,7 +1043,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                 <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5, padding:"5px 10px", background:"var(--inp)", borderRadius:8, border:"1.5px solid var(--pri)" }}>
                   <span style={{ fontSize:13, fontWeight:600, color:"var(--pri)", flex:1 }}>{st.name}</span>
                   <button onClick={() => { setF("studentId",""); setF("goalId",""); setF("trials",[]); setStudentSearch(""); }}
-                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"var(--txt2)", lineHeight:1, padding:0 }}>×</button>
+                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"var(--txt2)", lineHeight:1, padding:0 }}>x</button>
                 </div>
               ) : null; })()}
               {/* Suggestions dropdown */}
@@ -1130,7 +1130,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
           {monthMinutes && selectedStudent && (
             <div className="alert-i">
               <strong>{form.date.slice(0,7) === nowYM() ? "This month" : form.date.slice(0,7)}:</strong>{" "}
-              Direct {monthMinutes.direct}/{selectedStudent.directMinutesPerMonth}m · Indirect {monthMinutes.indirect}/{selectedStudent.indirectMinutesPerMonth}m
+              Direct {monthMinutes.direct}/{selectedStudent.directMinutesPerMonth}m . Indirect {monthMinutes.indirect}/{selectedStudent.indirectMinutesPerMonth}m
             </div>
           )}
           <div className="fr">
@@ -1330,7 +1330,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                                     <div>
                                       <div style={{ display:"flex", gap:3, flexWrap:"wrap", marginBottom:4 }}>
                                         {trialArr.map((t, ti) => (
-                                          <span key={ti} style={{ width:24, height:24, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
+                                          <span key={ti} style={{ width:24, height:24, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"v":"x"}</span>
                                         ))}
                                       </div>
                                       <div style={{ fontSize:13, color:"var(--txt2)" }}>
@@ -1342,7 +1342,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                                   ) : gd.pmScore !== undefined ? (
                                     <span style={{ fontSize:16, fontWeight:700, color:"var(--pri)" }}>📏 {gd.pmScore}</span>
                                   ) : (
-                                    <span style={{ fontSize:13 }}>✅ {gd.correct} correct · ❌ {gd.incorrect ?? 0} incorrect</span>
+                                    <span style={{ fontSize:13 }}>✅ {gd.correct} correct . ❌ {gd.incorrect ?? 0} incorrect</span>
                                   )}
                                 </div>
                               )}
@@ -1601,7 +1601,7 @@ function ServicesPage({ students, sessions }) {
                     <div style={{ flex:1 }}>
                       <strong style={{ fontSize:13 }}>{st?.name || "Unknown"}</strong>
                       <span style={{ fontSize:12, color:"#7c3aed", marginLeft:8 }}>{s.date}</span>
-                      <span style={{ fontSize:12, color:"#6d28d9", marginLeft:8 }}>Direct: {s.directMinutes}m · Indirect: {s.indirectMinutes}m</span>
+                      <span style={{ fontSize:12, color:"#6d28d9", marginLeft:8 }}>Direct: {s.directMinutes}m . Indirect: {s.indirectMinutes}m</span>
                     </div>
                     {s.notes && <span style={{ fontSize:11, color:"#7c3aed", maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.notes}</span>}
                   </div>
@@ -1631,7 +1631,7 @@ function ServicesPage({ students, sessions }) {
                   const iPct = Math.min(100, (d.used.indirect / Math.max(1, d.indirectMinutesPerMonth)) * 100);
                   return (
                     <tr key={d.id} className={d.allMet ? "rg" : d.isOrange ? "ro" : ""}>
-                      <td style={{ whiteSpace:"nowrap" }}><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <span className="hide-mob" style={{ fontSize:11, color:"var(--txt2)" }}> · {d.grade}</span>}{d.studentType && d.studentType!=="IEP" && <span className={`bdg ${d.studentType==="504"?"bdg-a":""}`} style={{ marginLeft:5, fontSize:10, ...(d.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{d.studentType}</span>}</td>
+                      <td style={{ whiteSpace:"nowrap" }}><strong style={{ fontWeight: d.isOrange ? 700 : 500 }}>{d.name}</strong>{d.grade && <span className="hide-mob" style={{ fontSize:11, color:"var(--txt2)" }}> . {d.grade}</span>}{d.studentType && d.studentType!=="IEP" && <span className={`bdg ${d.studentType==="504"?"bdg-a":""}`} style={{ marginLeft:5, fontSize:10, ...(d.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{d.studentType}</span>}</td>
                       <td className="hide-mob">{d.used.direct}<span className="muted sm">/{d.directMinutesPerMonth}m</span></td>
                       <td><strong>{d.remD}m</strong></td>
                       <td className="hide-mob">
@@ -1645,7 +1645,7 @@ function ServicesPage({ students, sessions }) {
                         <span style={{ fontSize:10, color:"var(--txt2)" }}>{Math.round(iPct)}%</span>
                       </td>
                       <td>
-                        {d.allMet ? <span className="bdg bdg-g">✓ Met</span> : d.isOrange ? <span className="bdg bdg-o">⚠ Behind</span> : <span className="bdg bdg-n">On Track</span>}
+                        {d.allMet ? <span className="bdg bdg-g">v Met</span> : d.isOrange ? <span className="bdg bdg-o">⚠ Behind</span> : <span className="bdg bdg-n">On Track</span>}
                       </td>
                     </tr>
                   );
@@ -1693,14 +1693,14 @@ function MeetingsPage({ students, saveStudent }) {
   return (
     <div>
       <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap" }}>
-        <span className="bdg bdg-y">● Annual ≤30 days · Re-eval ≤75 days</span>
-        <span className="bdg bdg-rd">● Annual ≤7 days · Re-eval ≤60 days</span>
+        <span className="bdg bdg-y">● Annual ≤30 days . Re-eval ≤75 days</span>
+        <span className="bdg bdg-rd">● Annual ≤7 days . Re-eval ≤60 days</span>
       </div>
       <div className="sg sg4">
         <div className="sc"><div className="sl">Upcoming</div><div className="sv">{upcoming.length}</div></div>
         <div className="sc"><div className="sl">Urgent 🔴</div><div className="sv" style={{ color:"var(--red)" }}>{upcoming.filter(m=>m.hi==="red").length}</div></div>
         <div className="sc"><div className="sl">Soon 🟡</div><div className="sv" style={{ color:"var(--yel)" }}>{upcoming.filter(m=>m.hi==="yellow").length}</div></div>
-        <div className="sc"><div className="sl">Completed ✓</div><div className="sv" style={{ color:"var(--grn)" }}>{completed.length}</div></div>
+        <div className="sc"><div className="sl">Completed v</div><div className="sv" style={{ color:"var(--grn)" }}>{completed.length}</div></div>
       </div>
       {/* ── Calendar ── */}
       <div className="card" style={{ marginBottom:18 }}>
@@ -1711,13 +1711,13 @@ function MeetingsPage({ students, saveStudent }) {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m-2, 1);
               setCalMonth(d.toISOString().slice(0,7));
-            }}>‹</button>
+            }}><</button>
             <span style={{ fontWeight:600, fontSize:13.5, textAlign:"center", flex:1 }}>{ymLabel(calMonth)}</span>
             <button className="btn btn-g btn-sm" onClick={() => {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m, 1);
               setCalMonth(d.toISOString().slice(0,7));
-            }}>›</button>
+            }}>></button>
             <button className="btn btn-o btn-sm" onClick={() => setCalMonth(nowYM())}>Today</button>
           </div>
         </div>
@@ -1837,7 +1837,7 @@ function MeetingsPage({ students, saveStudent }) {
                     <td>
                       <div style={{ display:"flex", gap:6 }}>
                         <button className="btn btn-o btn-sm" onClick={() => { setSchedModal(m.id); setSchedDate(m.meetingScheduledDate||""); }}>📅 Set Date</button>
-                        <button className="btn btn-sm" style={{ background:"#d1f5e5", color:"#065f46" }} onClick={() => markDone(m.id)}>✓ Complete</button>
+                        <button className="btn btn-sm" style={{ background:"#d1f5e5", color:"#065f46" }} onClick={() => markDone(m.id)}>v Complete</button>
                       </div>
                     </td>
                   </tr>
@@ -1871,7 +1871,7 @@ function MeetingsPage({ students, saveStudent }) {
       {schedModal && (
         <div className="mo" onClick={() => setSchedModal(null)}>
           <div className="md" style={{ maxWidth:380 }} onClick={e => e.stopPropagation()}>
-            <div className="mh"><span className="mt2">Set Meeting Date</span><button className="xbtn" onClick={() => setSchedModal(null)}>×</button></div>
+            <div className="mh"><span className="mt2">Set Meeting Date</span><button className="xbtn" onClick={() => setSchedModal(null)}>x</button></div>
             <div className="mb2">
               <div className="fg">
                 <label className="fl">Meeting Date</label>
@@ -1998,7 +1998,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
           <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", fontSize:13, pointerEvents:"none", opacity:.45 }}>&#x1F50D;</span>
           <input className="fc" style={{ paddingLeft:30 }} placeholder="Search..." value={manageSearch} onChange={e => setManageSearch(e.target.value)} />
         </div>
-        {manageSearch && <button onClick={() => setManageSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>×</button>}
+        {manageSearch && <button onClick={() => setManageSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>x</button>}
         {/* Filter by type */}
         <select className="fc" style={{ flex:"0 0 auto", width:"auto", minWidth:110 }} value={manageFilter} onChange={e => setManageFilter(e.target.value)}>
           <option value="all">All Types</option>
@@ -2177,7 +2177,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
           <div className="md" style={{ maxWidth:480 }} onClick={e => e.stopPropagation()}>
             <div className="mh">
               <span className="mt2">{editGroupId ? "Edit Group" : "Create Group"}</span>
-              <button className="xbtn" onClick={() => setShowGroupModal(false)}>×</button>
+              <button className="xbtn" onClick={() => setShowGroupModal(false)}>x</button>
             </div>
             <div className="mb2">
               <div className="fg">
@@ -2227,7 +2227,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
           <div className="md" onClick={e => e.stopPropagation()}>
             <div className="mh">
               <span className="mt2">{editId ? "Edit Student" : "Add New Student"}</span>
-              <button className="xbtn" onClick={() => setShowModal(false)}>×</button>
+              <button className="xbtn" onClick={() => setShowModal(false)}>x</button>
             </div>
             <div className="mb2">
               {/* Student Type Selector */}
@@ -2292,13 +2292,13 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                   <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8 }}>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:12, fontWeight:600, color:"var(--pri)", marginBottom:3 }}>
-                        Goal {gi+1} · <span style={{ color:"var(--txt2)" }}>{g.goalType==="trials"?"🔢 Trials":g.goalType==="rubric"?"📊 Rubric":"📏 PM"}{g.goalType==="trials"?` (${g.trialSize||5}/set)`:""}</span>
+                        Goal {gi+1} . <span style={{ color:"var(--txt2)" }}>{g.goalType==="trials"?"🔢 Trials":g.goalType==="rubric"?"📊 Rubric":"📏 PM"}{g.goalType==="trials"?` (${g.trialSize||5}/set)`:""}</span>
                       </div>
                       <div style={{ fontSize:13, color:"var(--txt)", lineHeight:1.4 }}>{g.description || <span className="muted">No description</span>}</div>
                     </div>
                     <div style={{ display:"flex", gap:5, flexShrink:0 }}>
                       <button className="btn btn-o btn-sm" onClick={() => openEditGoal(g)}>Edit</button>
-                      <button className="btn btn-d btn-sm" onClick={() => deleteGoal(g.id)}>✕</button>
+                      <button className="btn btn-d btn-sm" onClick={() => deleteGoal(g.id)}>x</button>
                     </div>
                   </div>
                 </div>
@@ -2337,7 +2337,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                       <label className="fl">Rubric Levels</label>
                       <div className="tags">
                         {(goalForm.rubricLevels||[]).map((l,i)=>(
-                          <span key={i} className="tag">{l}<span className="tag-x" onClick={()=>setGF2(f=>({...f,rubricLevels:f.rubricLevels.filter((_,j)=>j!==i)}))}>×</span></span>
+                          <span key={i} className="tag">{l}<span className="tag-x" onClick={()=>setGF2(f=>({...f,rubricLevels:f.rubricLevels.filter((_,j)=>j!==i)}))}>x</span></span>
                         ))}
                       </div>
                       <div style={{display:"flex",gap:7}}>
@@ -2596,7 +2596,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
               <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                 <span className={`bdg ${isRubric ? "bdg-r" : isPM ? "bdg-n" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : isPM ? "📏 PM" : "🔢 Trials"}</span>
                 <button className="btn btn-p btn-sm" onClick={() => { setShowLogPanel(p => !p); setLogForm(f => ({...f, date:todayStr()})); }}>
-                  {showLogPanel ? "✕ Cancel" : "+ Log Data"}
+                  {showLogPanel ? "x Cancel" : "+ Log Data"}
                 </button>
                 {logSaved && <span className="bdg bdg-g">Saved!</span>}
               </div>
@@ -2627,11 +2627,11 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                     <div style={{ display:"flex", gap:8, marginBottom:8 }}>
                       <button className="btn btn-p" style={{ flex:1, background:"var(--grn)", justifyContent:"center" }}
                         onClick={() => setLF("trials", [...logForm.trials, "C"])}>
-                        ✓ Correct
+                        v Correct
                       </button>
                       <button className="btn btn-d" style={{ flex:1, justifyContent:"center" }}
                         onClick={() => setLF("trials", [...logForm.trials, "I"])}>
-                        ✗ Incorrect
+                        x Incorrect
                       </button>
                       {logForm.trials.length > 0 && (
                         <button className="btn btn-g" onClick={() => setLF("trials", logForm.trials.slice(0,-1))}>↩</button>
@@ -2642,7 +2642,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                         {logForm.trials.map((t,i) => (
                           <span key={i} style={{ width:28, height:28, borderRadius:"50%", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700,
                             background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)",
-                            color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
+                            color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"v":"x"}</span>
                         ))}
                       </div>
                     )}
@@ -2863,7 +2863,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                                 {gd?.trials ? (
                                   <div style={{ display:"flex", gap:2, flexWrap:"wrap" }}>
                                     {gd.trials.map((t, ti) => (
-                                      <span key={ti} style={{ width:20, height:20, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
+                                      <span key={ti} style={{ width:20, height:20, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"v":"x"}</span>
                                     ))}
                                   </div>
                                 ) : <span style={{ color:"var(--grn)", fontWeight:600 }}>✅ {gd?.correct ?? "-"}</span>}
@@ -3223,7 +3223,7 @@ function EvaluationsPage({ students, saveStudent }) {
           <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", fontSize:13, opacity:.45, pointerEvents:"none" }}>&#x1F50D;</span>
           <input className="fc" style={{ paddingLeft:30 }} placeholder="Search student or category..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        {search && <button onClick={() => setSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>×</button>}
+        {search && <button onClick={() => setSearch("")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--txt2)", padding:"0 2px" }}>x</button>}
         <button className="btn btn-p" onClick={() => handleOpenNew()}>+ New Evaluation</button>
       </div>
 
@@ -3339,7 +3339,7 @@ function EvaluationsPage({ students, saveStudent }) {
                               </span>
                               <button onClick={() => deleteSubtask(ev.studentId, ev.id, ii, si)}
                                 style={{ background:"none", border:"none", cursor:"pointer", fontSize:14, color:"#ccc", padding:"0 2px", lineHeight:1 }}
-                                title="Delete subtask">×</button>
+                                title="Delete subtask">x</button>
                             </div>
                           ))}
 
@@ -3402,7 +3402,7 @@ function EvaluationsPage({ students, saveStudent }) {
           <div className="md" onClick={e => e.stopPropagation()}>
             <div className="mh">
               <span className="mt2">New Evaluation</span>
-              <button className="xbtn" onClick={() => setShowModal(false)}>×</button>
+              <button className="xbtn" onClick={() => setShowModal(false)}>x</button>
             </div>
             <div className="mb2">
               <div className="fg">
@@ -3434,7 +3434,7 @@ function EvaluationsPage({ students, saveStudent }) {
                   <div style={{ marginTop:8, fontSize:12, color:"var(--txt2)", background:"var(--inp)", borderRadius:7, padding:"8px 10px" }}>
                     {EVAL_TEMPLATES[form.category].custom
                       ? <span>Starts with a recommended MH checklist. Add specific tests below.</span>
-                      : <span>Auto-generates {EVAL_TEMPLATES[form.category].components.length} sections · {EVAL_TEMPLATES[form.category].components.reduce((n,c)=>n+c.subtasks.length,0)} tasks. You can edit after creating.</span>
+                      : <span>Auto-generates {EVAL_TEMPLATES[form.category].components.length} sections . {EVAL_TEMPLATES[form.category].components.reduce((n,c)=>n+c.subtasks.length,0)} tasks. You can edit after creating.</span>
                     }
                   </div>
                 )}
@@ -3468,9 +3468,9 @@ function EvaluationsPage({ students, saveStudent }) {
                     <div style={{ marginBottom:10, display:"flex", flexDirection:"column", gap:5 }}>
                       {(form.customTests || []).map((ct, i) => (
                         <div key={i} style={{ display:"flex", alignItems:"center", gap:8, background:"var(--inp)", borderRadius:8, padding:"7px 11px", border:"1px solid var(--bdr)" }}>
-                          <span style={{ fontSize:13, flex:1 }}><strong>{ct.name}</strong>{ct.section ? <span style={{ color:"var(--txt2)", fontSize:12 }}> → {ct.section}</span> : ""}</span>
+                          <span style={{ fontSize:13, flex:1 }}><strong>{ct.name}</strong>{ct.section ? <span style={{ color:"var(--txt2)", fontSize:12 }}> -> {ct.section}</span> : ""}</span>
                           <button onClick={() => setF("customTests", (form.customTests||[]).filter((_,j)=>j!==i))}
-                            style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#ccc", lineHeight:1 }}>×</button>
+                            style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#ccc", lineHeight:1 }}>x</button>
                         </div>
                       ))}
                     </div>
