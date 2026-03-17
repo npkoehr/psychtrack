@@ -172,7 +172,7 @@ const CSS = `
   --txt:#162820;--txt2:#547060;--bdr:#d4e4dc;--card:#fff;
   --inp:#edf4f0;--shd:0 2px 12px rgba(20,50,35,.08);--shd2:0 6px 28px rgba(20,50,35,.13)
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;overflow-x:hidden}
 /* ── Login Screen ── */
 .login-wrap{min-height:100vh;background:var(--sidebar);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
 .login-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(45,125,94,.25) 0%, transparent 65%),radial-gradient(ellipse at 80% 20%, rgba(45,125,94,.15) 0%, transparent 50%)}
@@ -298,10 +298,10 @@ select.fc{cursor:pointer}
 .chk-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:2px 4px;border-radius:4px;transition:transform .1s}
 .chk-btn:hover{transform:scale(1.2)}
 
-/* ── Scroll & layout ── */
-html{overflow-y:auto}
-body{overflow-y:auto;overflow-x:hidden;min-height:100vh}
-.app{display:block;min-height:100vh}
+/* ── Layout ── */
+html{overflow-y:scroll;overflow-x:hidden}
+body{overflow-x:hidden;min-height:100vh}
+.app{display:block}
 .main{margin-left:210px}
 .sg4{grid-template-columns:repeat(4,1fr)}
 /* ── Mobile responsive ── */
@@ -930,11 +930,16 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
       const grp = groups.find(g => g.id === form.groupId);
       if (grp) await saveGroupSession(grp, sessionBase);
     } else {
-      await saveSession({ ...sessionBase, id: uid(), studentId: form.studentId });
+      const isGuest = form.studentId.startsWith("guest::");
+      const guestName = isGuest ? form.studentId.slice(7) : undefined;
+      await saveSession({ ...sessionBase, id: uid(), studentId: isGuest ? null : form.studentId, guestName });
     }
     setSaving(false);
     setSaved(true); setTimeout(() => setSaved(false), 2500);
-    setForm(f => ({ ...f, directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null })); // keep studentId, goalId, date
+    // Full reset after submit
+    setForm({ studentId:"", goalId:"", date:todayStr(), directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented:null, groupId:"" });
+    setStudentSearch("");
+    setShowSuggestions(false);
   };
 
   const visibleSessions = useMemo(() => {
@@ -1011,8 +1016,14 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                 const q = studentSearch.toLowerCase();
                 const matches = students.filter(s => s.name.toLowerCase().includes(q)).slice(0, 8);
                 if (!matches.length) return (
-                  <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:200, background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:9, boxShadow:"0 6px 20px rgba(0,0,0,.12)", padding:"10px 14px", fontSize:13, color:"var(--txt2)" }}>
-                    No students found
+                  <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:200, background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:9, boxShadow:"0 6px 20px rgba(0,0,0,.12)", overflow:"hidden" }}>
+                    <div style={{ padding:"10px 14px", fontSize:13, color:"var(--txt2)" }}>No students match "{studentSearch}"</div>
+                    <div
+                      onMouseDown={e => { e.preventDefault(); setF("studentId", "guest::" + studentSearch.trim()); setStudentSearch(studentSearch.trim()); setShowSuggestions(false); }}
+                      style={{ padding:"10px 14px", fontSize:13, fontWeight:600, color:"var(--pri)", cursor:"pointer", background:"var(--inp)", borderTop:"1px solid var(--bdr)" }}>
+                      + Log time for "{studentSearch}" (not on caseload)
+                    </div>
+                    <div style={{ display:"none" }}>No students found
                   </div>
                 );
                 return (
@@ -1028,6 +1039,12 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                         {s.studentType && s.studentType!=="IEP" && <span className={`bdg ${s.studentType==="504"?"bdg-a":""}`} style={{ fontSize:10, ...(s.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{s.studentType}</span>}
                       </div>
                     ))}
+                    <div onMouseDown={e => { e.preventDefault(); setF("studentId","guest::"+studentSearch.trim()); setStudentSearch(studentSearch.trim()); setShowSuggestions(false); }}
+                      style={{ padding:"9px 14px", fontSize:12, color:"var(--txt2)", cursor:"pointer", background:"var(--inp)", display:"flex", alignItems:"center", gap:6 }}
+                      onMouseEnter={e => e.currentTarget.style.color="var(--pri)"}
+                      onMouseLeave={e => e.currentTarget.style.color="var(--txt2)"}>
+                      <span style={{ color:"var(--pri)", fontWeight:700 }}>+</span> Log for "{studentSearch}" (not on caseload)
+                    </div>
                   </div>
                 );
               })()}
@@ -1223,6 +1240,8 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
               <tbody>
                 {visibleSessions.map(s => {
                   const st = students.find(x => x.id === s.studentId);
+                  const displayName = st?.name || s.guestName || "Unknown";
+                  const isGuest = !s.studentId && s.guestName;
                   const gd = s.goalData;
                   const goalStr = gd?.pmScore !== undefined ? `📏 ${gd.pmScore}` : gd?.rubricScore ? `📊 ${gd.rubricScore}` : (gd?.correct !== undefined ? `✅ ${gd.correct}  ❌ ${gd.incorrect ?? 0}` : "—");
                   const isExpanded = expandedSession === s.id;
@@ -1235,7 +1254,8 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                           borderBottom: isExpanded ? "none" : undefined }}
                       >
                         <td>
-                          <strong>{st?.name || "Unknown"}</strong>
+                          <strong>{displayName}</strong>
+                          {isGuest && <span style={{ fontSize:10, color:"var(--txt2)", marginLeft:4, fontStyle:"italic" }}>off-caseload</span>}
                           {s.groupName && <div style={{ fontSize:10.5, color:"#7c3aed", marginTop:1 }}>👥 {s.groupName}</div>}
                         </td>
                         <td style={{ whiteSpace:"nowrap" }}>{s.date}</td>
@@ -1342,7 +1362,14 @@ function ServicesPage({ students, sessions }) {
     const isOrange = isCurrentMonth && afterW1 && !allMet && ((remD / wLeft) > 30 || (remI / wLeft) > 30);
     return { ...st, used, remD, remI, allMet, isOrange };
   }), [students, sessions, selMonth, isCurrentMonth]);
-  const filteredSvcData = useMemo(() => svcSearch.trim() ? data.filter(d => d.name.toLowerCase().includes(svcSearch.toLowerCase())) : data, [data, svcSearch]);
+  const filteredSvcData = useMemo(() => {
+    const rows = svcSearch.trim() ? data.filter(d => d.name.toLowerCase().includes(svcSearch.toLowerCase())) : data;
+    const urgency = d => d.isOrange ? 0 : d.allMet ? 2 : 1;
+    return [...rows].sort((a, b) => {
+      if (urgency(a) !== urgency(b)) return urgency(a) - urgency(b);
+      return (b.remD + b.remI) - (a.remD + a.remI);
+    });
+  }, [data, svcSearch]);
 
   return (
     <div>
