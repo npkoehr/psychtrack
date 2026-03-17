@@ -9,7 +9,7 @@ const supabase = createClient(
 
 /* ── Password / Auth ──
    Default password is: psychtrack2025
-   The app stores only a SHA-256 hash in localStorage — never the plain password.
+   The app stores only a SHA-256 hash in localStorage - never the plain password.
    To change the password: click the lock icon in the sidebar footer.
 */
 const DEFAULT_PASSWORD = "psychtrack2025";
@@ -432,9 +432,9 @@ function LoginScreen({ onLogin }) {
         </div>
         {error && <div className="login-err">{error}</div>}
         <button className="login-btn" onClick={handleLogin} disabled={loading || !password}>
-          {loading ? "Checking…" : "Unlock App →"}
+          {loading ? "Checking..." : "Unlock App"}
         </button>
-        <div className="login-hint">Default password: psychtrack2025 — change it inside the app</div>
+        <div className="login-hint">Default password: psychtrack2025 - change it inside the app</div>
       </div>
     </div>
   );
@@ -480,7 +480,7 @@ function ChangePasswordModal({ onClose }) {
             <div style={{ textAlign:"center", padding:"18px 0" }}>
               <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
               <p style={{ fontWeight:600, color:"var(--grn)" }}>Password changed!</p>
-              <p className="sm muted" style={{ marginTop:6 }}>Logging you out now…</p>
+              <p className="sm muted" style={{ marginTop:6 }}>Logging you out now...</p>
             </div>
           ) : (
             <>
@@ -504,7 +504,7 @@ function ChangePasswordModal({ onClose }) {
               </div>
               {error && <div style={{ color:"var(--red)", fontSize:12.5, padding:"7px 11px", background:"#fde8e8", borderRadius:8, marginBottom:8 }}>{error}</div>}
               <div style={{ fontSize:12, color:"var(--txt2)", background:"var(--inp)", padding:"9px 12px", borderRadius:8 }}>
-                🔒 Passwords are stored as SHA-256 hashes — never in plain text.
+                🔒 Passwords are stored as SHA-256 hashes - never in plain text.
               </div>
             </>
           )}
@@ -513,7 +513,7 @@ function ChangePasswordModal({ onClose }) {
           <div className="mf">
             <button className="btn btn-g" onClick={onClose}>Cancel</button>
             <button className="btn btn-p" onClick={handleChange} disabled={loading || !current || !next || !confirm}>
-              {loading ? "Saving…" : "Change Password"}
+              {loading ? "Saving..." : "Change Password"}
             </button>
           </div>
         )}
@@ -628,7 +628,7 @@ export default function App() {
       <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:"#f2f6f4" }}>
         <div style={{ textAlign:"center", color:"#547060" }}>
           <div style={{ fontSize:36, marginBottom:12 }}>🌿</div>
-          <p>Connecting to Supabase…</p>
+          <p>Connecting to Supabase...</p>
         </div>
       </div>
     </>
@@ -643,7 +643,7 @@ export default function App() {
     { id: "manage",    ico: "👥", label: "Manage Students" },
   ];
   const titles = { tracking: "Session Tracking", services: "Services", goals: "Goal Progress", meetings: "Meetings", evals: "Evaluations", manage: "Manage Students" };
-  const syncLabel = syncStatus === "syncing" ? "⟳ Syncing…" : syncStatus === "err" ? "⚠ Sync error" : "● Live";
+  const syncLabel = syncStatus === "syncing" ? "⟳ Syncing..." : syncStatus === "err" ? "⚠ Sync error" : "● Live";
 
   return (
     <>
@@ -778,7 +778,7 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
     buf.push(t);
     pos++;
     if (pos === trialSize) {
-      // Need to reconstruct the full set — first (trialSize - buf.length + buf.length) but actually
+      // Need to reconstruct the full set - first (trialSize - buf.length + buf.length) but actually
       // the set may have started in a previous session
       completedSets.push({ trials: buf.slice(), complete: true });
       buf = [];
@@ -800,7 +800,7 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
       {carryover > 0 && (
         <div style={{ fontSize:12, color:"var(--txt2)", background:"var(--inp)", borderRadius:8, padding:"7px 11px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
           <span>↩</span>
-          <span><strong>{carryover}</strong> trial{carryover !== 1 ? "s" : ""} carried over from previous sessions — need <strong>{trialSize - carryover}</strong> more to complete this set</span>
+          <span><strong>{carryover}</strong> trial{carryover !== 1 ? "s" : ""} carried over from previous sessions - need <strong>{trialSize - carryover}</strong> more to complete this set</span>
         </div>
       )}
 
@@ -1071,14 +1071,14 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
             </div>
           )}
 
-          {/* Goal selector — shown when student has multiple goals */}
+          {/* Goal selector - shown when student has multiple goals */}
           {selectedStudent && studentGoals.length > 1 && (
             <div className="fg">
               <label className="fl">Goal <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0, color:"var(--txt2)", fontSize:11 }}>(optional)</span></label>
               <select className="fc" value={form.goalId} onChange={e => { setF("goalId", e.target.value); setF("trials",[]); }}>
-                <option value="">— No specific goal —</option>
+                <option value="">- No specific goal -</option>
                 {studentGoals.map((g,i) => (
-                  <option key={g.id} value={g.id}>Goal {i+1}: {g.description ? (g.description.length>50?g.description.slice(0,50)+"…":g.description) : g.goalType}</option>
+                  <option key={g.id} value={g.id}>Goal {i+1}: {g.description ? (g.description.length>50?g.description.slice(0,50)+"...":g.description) : g.goalType}</option>
                 ))}
               </select>
             </div>
@@ -1200,7 +1200,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
             )}
           </div>
           <button className="btn btn-p" style={{ width:"100%", justifyContent:"center", marginTop:6 }} onClick={handleSubmit} disabled={(trackMode==="individual" ? !form.studentId : !form.groupId) || saving}>
-            {saving ? "Saving…" : "＋ Log Session"}
+            {saving ? "Saving..." : "＋ Log Session"}
           </button>
         </div>
       </div>
@@ -1243,7 +1243,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                   const displayName = st?.name || s.guestName || "Unknown";
                   const isGuest = !s.studentId && s.guestName;
                   const gd = s.goalData;
-                  const goalStr = gd?.pmScore !== undefined ? `📏 ${gd.pmScore}` : gd?.rubricScore ? `📊 ${gd.rubricScore}` : (gd?.correct !== undefined ? `✅ ${gd.correct}  ❌ ${gd.incorrect ?? 0}` : "—");
+                  const goalStr = gd?.pmScore !== undefined ? `📏 ${gd.pmScore}` : gd?.rubricScore ? `📊 ${gd.rubricScore}` : (gd?.correct !== undefined ? `✅ ${gd.correct}  ❌ ${gd.incorrect ?? 0}` : "-");
                   const isExpanded = expandedSession === s.id;
                   const trialArr = gd?.trials;
                   return (
@@ -1263,7 +1263,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                         <td className="hide-mob">{s.indirectMinutes}m</td>
                         <td className="hide-mob" style={{ fontSize:12 }}>{goalStr}</td>
                         <td style={{ maxWidth:160, fontSize:12, color:"#547060" }}>
-                          {s.notes ? (s.notes.length > 40 ? s.notes.slice(0,40)+"…" : s.notes) : <span className="muted">—</span>}
+                          {s.notes ? (s.notes.length > 40 ? s.notes.slice(0,40)+"..." : s.notes) : <span className="muted">-</span>}
                         </td>
                         <td style={{ textAlign:"center" }} onClick={e => e.stopPropagation()}>
                           <button
@@ -1392,7 +1392,7 @@ function ServicesPage({ students, sessions }) {
       </div>
       <div style={{ display:"flex", gap:10, marginBottom:13, flexWrap:"wrap" }}>
         <span className="bdg bdg-g">● Services Met</span>
-        <span className="bdg bdg-o">● Behind — &gt;30 min/week remaining after week 1</span>
+        <span className="bdg bdg-o">● Behind - &gt;30 min/week remaining after week 1</span>
       </div>
 
       {/* 8-week PM reminders */}
@@ -1420,7 +1420,7 @@ function ServicesPage({ students, sessions }) {
                   {overdue.map(s => {
                     const g = getPmGoal(s);
                     const days = g?.lastPmDate ? Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000) : null;
-                    return <span key={s.id} className="bdg bdg-rd">{s.name}{days ? ` — ${days}d ago` : " — never monitored"}</span>;
+                    return <span key={s.id} className="bdg bdg-rd">{s.name}{days ? ` - ${days}d ago` : " - never monitored"}</span>;
                   })}
                 </div>
               </div>
@@ -1432,7 +1432,7 @@ function ServicesPage({ students, sessions }) {
                   {dueSoon.map(s => {
                     const g = getPmGoal(s);
                     const days = g?.lastPmDate ? Math.round((new Date() - new Date(g.lastPmDate + "T00:00:00")) / 86400000) : 0;
-                    return <span key={s.id} className="bdg bdg-y">{s.name} — {days}d ago</span>;
+                    return <span key={s.id} className="bdg bdg-y">{s.name} - {days}d ago</span>;
                   })}
                 </div>
               </div>
@@ -1447,7 +1447,7 @@ function ServicesPage({ students, sessions }) {
         return (
           <div style={{ background:"#f0eaff", border:"1.5px solid #c4a8f5", borderRadius:10, padding:"13px 16px", marginBottom:16 }}>
             <div style={{ fontWeight:600, color:"#5b21b6", marginBottom:8, fontSize:13, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-              <span>📝 Undocumented Sessions — {ymLabel(selMonth)}</span>
+              <span>📝 Undocumented Sessions - {ymLabel(selMonth)}</span>
               <span style={{ fontSize:12, fontWeight:500, color:"#7c3aed" }}>{undoc.length} session{undoc.length !== 1 ? "s" : ""} need documentation</span>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -1655,7 +1655,7 @@ function MeetingsPage({ students, saveStudent }) {
                           }
                           if (m.meetingCompleted) { bg="#f0f0f0"; color="#aaa"; }
                           return (
-                            <div key={mi} title={`${m.name} — ${m.kind==="due"?"Due":"Scheduled"} (${m.meetingType})`}
+                            <div key={mi} title={`${m.name} - ${m.kind==="due"?"Due":"Scheduled"} (${m.meetingType})`}
                               style={{ background:bg, color, fontSize:9.5, fontWeight:600, borderRadius:4, padding:"2px 4px", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", lineHeight:1.4 }}>
                               {m.kind==="sched"?"📅 ":m.hi==="red"?"🔴 ":m.hi==="yellow"?"🟡 ":"🔵 "}{m.name.split(" ")[0]}
                             </div>
@@ -1695,7 +1695,7 @@ function MeetingsPage({ students, saveStudent }) {
                     <td><span style={{ fontWeight:600, color:m.hi==="red"?"var(--red)":m.hi==="yellow"?"#9a6800":"var(--grn)" }}>
                       {m.days < 0 ? `⚠ ${Math.abs(m.days)}d` : m.days === 0 ? "⚠ Today" : `${m.days}d`}
                     </span></td>
-                    <td className="hide-mob">{m.meetingScheduledDate ? <span style={{ color:"var(--grn)", fontWeight:500 }}>📅 {m.meetingScheduledDate}</span> : <span className="sm muted">—</span>}</td>
+                    <td className="hide-mob">{m.meetingScheduledDate ? <span style={{ color:"var(--grn)", fontWeight:500 }}>📅 {m.meetingScheduledDate}</span> : <span className="sm muted">-</span>}</td>
                     <td>
                       <div style={{ display:"flex", gap:6 }}>
                         <button className="btn btn-o btn-sm" onClick={() => { setSchedModal(m.id); setSchedDate(m.meetingScheduledDate||""); }}>📅 Set Date</button>
@@ -1721,7 +1721,7 @@ function MeetingsPage({ students, saveStudent }) {
                     <td><strong>{s.name}</strong></td>
                     <td><span className={`bdg ${s.meetingType==="Annual"?"bdg-a":"bdg-r"}`}>{s.meetingType}</span></td>
                     <td>{s.meetingDueDate}</td>
-                    <td>{s.meetingScheduledDate||"—"}</td>
+                    <td>{s.meetingScheduledDate||"-"}</td>
                     <td><button className="btn btn-g btn-sm" onClick={() => undoDone(s.id)}>↩ Undo</button></td>
                   </tr>
                 ))}
@@ -1870,8 +1870,8 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
         </select>
         {/* Sort */}
         <select className="fc" style={{ flex:"0 0 auto", width:"auto", minWidth:160 }} value={manageSort} onChange={e => setManageSort(e.target.value)}>
-          <option value="name-az">Name A → Z</option>
-          <option value="name-za">Name Z → A</option>
+          <option value="name-az">Name A to Z</option>
+          <option value="name-za">Name Z to A</option>
           <option value="type">By Type</option>
           <option value="due-asc">Due Date (Soonest)</option>
           <option value="due-desc">Due Date (Latest)</option>
@@ -1897,7 +1897,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                     <tr key={s.id} style={{ opacity:.7 }}>
                       <td><strong>{s.name}</strong></td>
                       <td>{s.studentType==="504"?<span className="bdg bdg-a">504</span>:s.studentType==="GenEd"?<span className="bdg" style={{background:"#f0eaff",color:"#7c3aed"}}>GenEd</span>:<span className="bdg bdg-g">IEP</span>}</td>
-                      <td>{s.grade||"—"}</td>
+                      <td>{s.grade||"-"}</td>
                       <td>
                         <div style={{ display:"flex", gap:5 }}>
                           <button className="btn btn-o btn-sm" onClick={() => saveStudent({...s, archived:false})}>Unarchive</button>
@@ -1961,11 +1961,11 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                         ? <span className="bdg" style={{ background:"#f0eaff", color:"#7c3aed" }}>GenEd</span>
                         : <span className="bdg bdg-g">IEP</span>}
                       </td>
-                      <td>{s.grade||"—"}</td>
-                      <td>{s.studentType==="GenEd" ? <span className="muted sm">—</span> : <><strong>{s.directMinutesPerMonth}</strong>m</>}</td>
-                      <td>{s.studentType==="GenEd" ? <span className="muted sm">—</span> : <><strong>{s.indirectMinutesPerMonth}</strong>m</>}</td>
-                      <td>{s.studentType==="IEP" ? (() => { const gs = getStudentGoals(s); return gs.length===0 ? <span className="muted sm">No goals</span> : gs.length===1 ? <span className={`bdg ${gs[0].goalType==="rubric"?"bdg-r":gs[0].goalType==="pm"?"bdg-n":"bdg-a"}`}>{gs[0].goalType==="rubric"?"Rubric":gs[0].goalType==="pm"?"PM":"Trials"}</span> : <span className="bdg bdg-a">{gs.length} goals</span>; })() : <span className="muted sm">—</span>}</td>
-                      <td><span style={{ color:urgent?"var(--red)":"var(--txt)", fontWeight:urgent?600:400 }}>{s.meetingDueDate||"—"}{s.meetingCompleted&&<span className="bdg bdg-g" style={{ marginLeft:4 }}>Done</span>}</span></td>
+                      <td>{s.grade||"-"}</td>
+                      <td>{s.studentType==="GenEd" ? <span className="muted sm">-</span> : <><strong>{s.directMinutesPerMonth}</strong>m</>}</td>
+                      <td>{s.studentType==="GenEd" ? <span className="muted sm">-</span> : <><strong>{s.indirectMinutesPerMonth}</strong>m</>}</td>
+                      <td>{s.studentType==="IEP" ? (() => { const gs = getStudentGoals(s); return gs.length===0 ? <span className="muted sm">No goals</span> : gs.length===1 ? <span className={`bdg ${gs[0].goalType==="rubric"?"bdg-r":gs[0].goalType==="pm"?"bdg-n":"bdg-a"}`}>{gs[0].goalType==="rubric"?"Rubric":gs[0].goalType==="pm"?"PM":"Trials"}</span> : <span className="bdg bdg-a">{gs.length} goals</span>; })() : <span className="muted sm">-</span>}</td>
+                      <td><span style={{ color:urgent?"var(--red)":"var(--txt)", fontWeight:urgent?600:400 }}>{s.meetingDueDate||"-"}{s.meetingCompleted&&<span className="bdg bdg-g" style={{ marginLeft:4 }}>Done</span>}</span></td>
                       <td><span className="bdg bdg-n">{sessions.filter(x=>x.studentId===s.id).length}</span></td>
                       <td>
                         <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
@@ -2049,7 +2049,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
               <div className="div" />
               <div className="sec">Select Members</div>
               <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:280, overflowY:"auto" }}>
-                {students.length === 0 && <p className="muted sm">No students yet — add students first.</p>}
+                {students.length === 0 && <p className="muted sm">No students yet - add students first.</p>}
                 {students.map(s => {
                   const selected = groupForm.memberIds.includes(s.id);
                   return (
@@ -2077,7 +2077,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
             <div className="mf">
               <button className="btn btn-g" onClick={() => setShowGroupModal(false)}>Cancel</button>
               <button className="btn btn-p" style={{ background:"#7c3aed", borderColor:"#7c3aed" }} onClick={handleSaveGroup} disabled={!groupForm.name.trim() || savingGroup}>
-                {savingGroup ? "Saving…" : editGroupId ? "Save Changes" : "Create Group"}
+                {savingGroup ? "Saving..." : editGroupId ? "Save Changes" : "Create Group"}
               </button>
             </div>
           </div>
@@ -2109,7 +2109,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
                 <div style={{ fontSize:12, color:"var(--txt2)", marginTop:5 }}>
                   {form.studentType==="IEP" && "IEP students have goals and set service minutes."}
                   {form.studentType==="504" && "504 students have a 504 plan but no IEP goals."}
-                  {form.studentType==="GenEd" && "General education students — no goals or set minutes."}
+                  {form.studentType==="GenEd" && "General education students - no goals or set minutes."}
                 </div>
               </div>
               <div className="div" />
@@ -2147,7 +2147,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
 
               {/* Goal list */}
               {(form.goals||[]).length === 0 && (
-                <div style={{ fontSize:13, color:"var(--txt2)", padding:"10px 0", marginBottom:8 }}>No goals yet — click "Add Goal" to add one.</div>
+                <div style={{ fontSize:13, color:"var(--txt2)", padding:"10px 0", marginBottom:8 }}>No goals yet - click "Add Goal" to add one.</div>
               )}
               {(form.goals||[]).map((g, gi) => (
                 <div key={g.id} style={{ background:"var(--inp)", borderRadius:9, padding:"10px 13px", marginBottom:8, border:"1.5px solid var(--bdr)" }}>
@@ -2260,7 +2260,7 @@ function ManagePage({ students, groups, sessions, saveStudent, deleteStudent, al
             <div className="mf">
               <button className="btn btn-g" onClick={() => setShowModal(false)}>Cancel</button>
               <button className="btn btn-p" onClick={handleSave} disabled={!form.name.trim()||saving}>
-                {saving ? "Saving…" : editId ? "Save Changes" : "Add Student"}
+                {saving ? "Saving..." : editId ? "Save Changes" : "Add Student"}
               </button>
             </div>
           </div>
@@ -2296,7 +2296,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
         if (!s.goalData) return false;
         // Match by goalId if present, otherwise match legacy sessions to any goal
         if (s.goalData.goalId) return s.goalData.goalId === selectedGoal.id;
-        // Legacy: no goalId — match if this is the first/only goal
+        // Legacy: no goalId - match if this is the first/only goal
         const goals = getStudentGoals(student);
         return goals.indexOf(selectedGoal) === 0;
       })
@@ -2319,7 +2319,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
       return trialSets.map(set => ({
         date: set.endDate,
         value: set.pct,
-        label: `${set.correct}/${set.total} (${set.pct}%) — Set ${set.setNum}`,
+        label: `${set.correct}/${set.total} (${set.pct}%) - Set ${set.setNum}`,
         setNum: set.setNum,
         set,
       }));
@@ -2435,7 +2435,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
             <select className="fc" value={selGoalId} onChange={e => setSelGoalId(e.target.value)}>
               <option value="">Choose a goal...</option>
               {studentGoals.map((g,i) => (
-                <option key={g.id} value={g.id}>Goal {i+1}: {g.description?(g.description.length>40?g.description.slice(0,40)+"…":g.description):g.goalType}</option>
+                <option key={g.id} value={g.id}>Goal {i+1}: {g.description?(g.description.length>40?g.description.slice(0,40)+"...":g.description):g.goalType}</option>
               ))}
             </select>
           </div>
@@ -2454,7 +2454,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
           {/* Goal info card */}
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="ch">
-              <span className="ct">{student.name} — {selectedGoal ? (selectedGoal.description ? (selectedGoal.description.length>35?selectedGoal.description.slice(0,35)+"…":selectedGoal.description) : "Goal") : "Goal"}</span>
+              <span className="ct">{student.name} - {selectedGoal ? (selectedGoal.description ? (selectedGoal.description.length>35?selectedGoal.description.slice(0,35)+"...":selectedGoal.description) : "Goal") : "Goal"}</span>
               <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                 <span className={`bdg ${isRubric ? "bdg-r" : isPM ? "bdg-n" : "bdg-a"}`}>{isRubric ? "📊 Rubric" : isPM ? "📏 PM" : "🔢 Trials"}</span>
                 <button className="btn btn-p btn-sm" onClick={() => { setShowLogPanel(p => !p); setLogForm(f => ({...f, date:todayStr()})); }}>
@@ -2555,7 +2555,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                     </button>
                   </div>
                   <button className="btn btn-p" onClick={handleQuickLog} disabled={!logForm.date || logSaving} style={{ minWidth:120, justifyContent:"center" }}>
-                    {logSaving ? "Saving…" : "Save Session"}
+                    {logSaving ? "Saving..." : "Save Session"}
                   </button>
                 </div>
               </div>
@@ -2574,7 +2574,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                 return remainder > 0 ? (
                   <div style={{ fontSize:12.5, color:"var(--txt2)", background:"var(--inp)", borderRadius:8, padding:"7px 12px", marginBottom:12, display:"flex", gap:6 }}>
                     <span>↩</span>
-                    <span><strong>{remainder}</strong> trial{remainder !== 1 ? "s" : ""} in progress — need <strong>{trialSize - remainder}</strong> more to complete next set (total: {totalTrials} trials logged)</span>
+                    <span><strong>{remainder}</strong> trial{remainder !== 1 ? "s" : ""} in progress - need <strong>{trialSize - remainder}</strong> more to complete next set (total: {totalTrials} trials logged)</span>
                   </div>
                 ) : null;
               })()}
@@ -2587,16 +2587,16 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                 </div>
                 <div className="sc">
                   <div className="sl">Latest Score</div>
-                  <div className="sv" style={{ color: "var(--pri)" }}>{latest !== null ? (isTrials ? `${latest}%` : latest) : "—"}</div>
+                  <div className="sv" style={{ color: "var(--pri)" }}>{latest !== null ? (isTrials ? `${latest}%` : latest) : "-"}</div>
                 </div>
                 <div className="sc">
                   <div className="sl">Average</div>
-                  <div className="sv">{avg !== null ? (isTrials ? `${avg}%` : avg) : "—"}</div>
+                  <div className="sv">{avg !== null ? (isTrials ? `${avg}%` : avg) : "-"}</div>
                 </div>
                 <div className="sc">
                   <div className="sl">Trend</div>
                   <div className="sv" style={{ color: trend === null ? "var(--txt2)" : trend >= 0 ? "var(--grn)" : "var(--red)" }}>
-                    {trend === null ? "—" : `${trend >= 0 ? "+" : ""}${trend}${isTrials ? "%" : ""}`}
+                    {trend === null ? "-" : `${trend >= 0 ? "+" : ""}${trend}${isTrials ? "%" : ""}`}
                   </div>
                   {trend !== null && <div style={{ fontSize: 10, color: "var(--txt2)" }}>since first session</div>}
                 </div>
@@ -2691,7 +2691,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
 
           {/* Session data table */}
           <div className="card">
-            <div className="ch"><span className="ct">Session Data</span><span className="sm muted">{selectedGoal?.description ? (selectedGoal.description.length>30?selectedGoal.description.slice(0,30)+"…":selectedGoal.description) : student.name}</span></div>
+            <div className="ch"><span className="ct">Session Data</span><span className="sm muted">{selectedGoal?.description ? (selectedGoal.description.length>30?selectedGoal.description.slice(0,30)+"...":selectedGoal.description) : student.name}</span></div>
             {allSessions.length === 0 ? (
               <div className="empty"><div className="empty-i">📋</div><p>No sessions logged yet.</p></div>
             ) : (
@@ -2728,25 +2728,25 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                                       <span key={ti} style={{ width:20, height:20, borderRadius:"50%", background: t==="C"?"#d1f5e5":"#fde0e0", border: t==="C"?"1.5px solid var(--grn)":"1.5px solid var(--red)", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color: t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"✓":"✗"}</span>
                                     ))}
                                   </div>
-                                ) : <span style={{ color:"var(--grn)", fontWeight:600 }}>✅ {gd?.correct ?? "—"}</span>}
+                                ) : <span style={{ color:"var(--grn)", fontWeight:600 }}>✅ {gd?.correct ?? "-"}</span>}
                               </td>
-                              <td><span style={{ color: "var(--txt2)", fontSize:12 }}>{gd?.trials ? `${gd.trials.filter(t=>t==="C").length}/${gd.trials.length}` : (gd?.incorrect ?? "—")}</span></td>
+                              <td><span style={{ color: "var(--txt2)", fontSize:12 }}>{gd?.trials ? `${gd.trials.filter(t=>t==="C").length}/${gd.trials.length}` : (gd?.incorrect ?? "-")}</span></td>
                               <td>
                                 {pct !== null ? (
                                   <span style={{ fontWeight: 700, color: pct >= 80 ? "var(--grn)" : pct >= 60 ? "var(--ora)" : "var(--red)" }}>
                                     {pct}%
                                   </span>
-                                ) : "—"}
+                                ) : "-"}
                               </td>
                             </>
                           )}
                           {isRubric && (
-                            <td><span className="bdg bdg-r">{gd?.rubricScore || "—"}</span></td>
+                            <td><span className="bdg bdg-r">{gd?.rubricScore || "-"}</span></td>
                           )}
                           {isPM && (
                             <td>
                               <span style={{ fontWeight:700, fontSize:15, color: selectedGoal?.pmGoalScore && gd?.pmScore >= Number(selectedGoal.pmGoalScore) ? "var(--grn)" : "var(--pri)" }}>
-                                {gd?.pmScore ?? "—"}
+                                {gd?.pmScore ?? "-"}
                               </span>
                               {selectedGoal?.pmGoalScore && gd?.pmScore !== undefined && (
                                 <span style={{ fontSize:11, color:"var(--txt2)", marginLeft:5 }}>/ {selectedGoal.pmGoalScore}</span>
@@ -2754,7 +2754,7 @@ function GoalProgressPage({ students, sessions, saveSession }) {
                             </td>
                           )}
                           <td style={{ maxWidth: 220, fontSize: 12, color: "var(--txt2)" }}>
-                            {s.notes ? (s.notes.length > 70 ? s.notes.slice(0, 70) + "…" : s.notes) : <span className="muted">—</span>}
+                            {s.notes ? (s.notes.length > 70 ? s.notes.slice(0, 70) + "..." : s.notes) : <span className="muted">-</span>}
                           </td>
                         </tr>
                       );
@@ -2820,7 +2820,7 @@ const EVAL_TEMPLATES = {
     ]
   },
   "OHI_ADHD": {
-    label: "OHI — ADHD",
+    label: "OHI - ADHD",
     color: "#b45309", bg: "#fef3c7",
     components: [
       { title: "Review of Existing Data", subtasks: ["Review prior evaluations and intervention data", "Review academic records and grades", "Review attendance and disciplinary history", "Gather prior ADHD assessments if available"] },
@@ -3282,7 +3282,7 @@ function EvaluationsPage({ students, saveStudent }) {
                     <option value="MH">Mental Health Concerns (MH)</option>
                     <option value="ED">Emotional Disturbance (ED)</option>
                     <option value="ASD">Autism Spectrum Disorder (ASD)</option>
-                    <option value="OHI_ADHD">OHI — ADHD</option>
+                    <option value="OHI_ADHD">OHI - ADHD</option>
                   </optgroup>
                   <optgroup label="Cognitive / Academic">
                     <option value="SLD">Specific Learning Disability (SLD)</option>
@@ -3316,7 +3316,7 @@ function EvaluationsPage({ students, saveStudent }) {
                 <textarea className="fc" rows={2} placeholder="Any notes about this evaluation..." value={form.notes} onChange={e => setF("notes", e.target.value)} />
               </div>
 
-              {/* Custom test builder — shown for MH / Custom categories */}
+              {/* Custom test builder - shown for MH / Custom categories */}
               {form.category && (EVAL_TEMPLATES[form.category]?.custom || form.category === "CUSTOM") && (
                 <div>
                   <div className="div" />
