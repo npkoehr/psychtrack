@@ -12,8 +12,10 @@
     <meta name="apple-mobile-web-app-title" content="MHTrack" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <style>
-      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-      body { overscroll-behavior-y: contain; }
+      *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html { overflow-y: scroll; overflow-x: hidden; height: auto; }
+      body { margin: 0; overflow-x: hidden; min-height: 100vh; overscroll-behavior-y: contain; }
+      #root { min-height: 100vh; }
     </style>
   </head>
   <body>
