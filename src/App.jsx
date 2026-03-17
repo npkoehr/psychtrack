@@ -1713,13 +1713,13 @@ function MeetingsPage({ students, saveStudent }) {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m-2, 1);
               setCalMonth(d.toISOString().slice(0,7));
-            }}><</button>
+            }}>&#8249;</button>
             <span style={{ fontWeight:600, fontSize:13.5, textAlign:"center", flex:1 }}>{ymLabel(calMonth)}</span>
             <button className="btn btn-g btn-sm" onClick={() => {
               const [y,m] = calMonth.split("-").map(Number);
               const d = new Date(y, m, 1);
               setCalMonth(d.toISOString().slice(0,7));
-            }}>></button>
+            }}>&#8250;</button>
             <button className="btn btn-o btn-sm" onClick={() => setCalMonth(nowYM())}>Today</button>
           </div>
         </div>
