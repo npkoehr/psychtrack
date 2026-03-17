@@ -172,7 +172,7 @@ const CSS = `
   --txt:#162820;--txt2:#547060;--bdr:#d4e4dc;--card:#fff;
   --inp:#edf4f0;--shd:0 2px 12px rgba(20,50,35,.08);--shd2:0 6px 28px rgba(20,50,35,.13)
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;overflow-x:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
 /* ── Login Screen ── */
 .login-wrap{min-height:100vh;background:var(--sidebar);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
 .login-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(45,125,94,.25) 0%, transparent 65%),radial-gradient(ellipse at 80% 20%, rgba(45,125,94,.15) 0%, transparent 50%)}
@@ -299,9 +299,7 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Layout ── */
-html{overflow-y:scroll;overflow-x:hidden}
-body{overflow-x:hidden;min-height:100vh}
-.app{display:block}
+.app{min-height:100vh}
 .main{margin-left:210px}
 .sg4{grid-template-columns:repeat(4,1fr)}
 /* ── Mobile responsive ── */
@@ -894,6 +892,43 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   const [filterStudent, setFilterStudent] = useState("");
   const [sessionSearch, setSessionSearch] = useState("");
   const [expandedSession, setExpandedSession] = useState(null);
+  const [editingSession, setEditingSession] = useState(null); // session object being edited
+  const [editForm, setEditForm] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+  const openEditSession = (s) => {
+    setEditingSession(s.id);
+    setEditForm({
+      date: s.date || "",
+      directMinutes: s.directMinutes ?? "",
+      indirectMinutes: s.indirectMinutes ?? "",
+      notes: s.notes || "",
+      documented: s.documented || false,
+      pmScore: s.goalData?.pmScore ?? "",
+      rubricScore: s.goalData?.rubricScore || "",
+      correct: s.goalData?.correct ?? "",
+      incorrect: s.goalData?.incorrect ?? "",
+    });
+  };
+  const saveEditSession = async (s) => {
+    setEditSaving(true);
+    const gd = { ...s.goalData };
+    if (gd) {
+      if (editForm.pmScore !== "" && editForm.pmScore !== undefined) gd.pmScore = Number(editForm.pmScore);
+      if (editForm.rubricScore) gd.rubricScore = editForm.rubricScore;
+      if (editForm.correct !== "") { gd.correct = Number(editForm.correct); gd.incorrect = Number(editForm.incorrect) || 0; }
+    }
+    const updated = { ...s,
+      date: editForm.date,
+      directMinutes: Number(editForm.directMinutes) || 0,
+      indirectMinutes: Number(editForm.indirectMinutes) || 0,
+      notes: editForm.notes,
+      documented: editForm.documented,
+      goalData: Object.keys(gd || {}).length ? gd : s.goalData,
+    };
+    await saveSession(updated);
+    setEditSaving(false);
+    setEditingSession(null);
+  };
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const selectedStudent = trackMode === "individual" ? students.find(s => s.id === form.studentId) : null;
@@ -1321,6 +1356,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
                             </div>
                             {/* Actions */}
                             <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"flex-end" }}>
+                              <button className="btn btn-o btn-sm" onClick={e => { e.stopPropagation(); openEditSession(s); }}>Edit</button>
                               <button className="btn btn-g btn-sm" onClick={() => toggleDocumented(s)}>
                                 {s.documented ? "⬜ Mark undocumented" : "✅ Mark documented"}
                               </button>
@@ -1338,6 +1374,109 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
         )}
       </div>
     </div>
+
+
+    {/* Edit Session Modal */}
+    {editingSession && (() => {
+      const s = sessions.find(x => x.id === editingSession);
+      if (!s) return null;
+      const st = students.find(x => x.id === s.studentId);
+      const gd = s.goalData;
+      const isTrials = gd?.trials?.length > 0;
+      const isRubric = !isTrials && gd?.rubricScore !== undefined;
+      const isPM = !isTrials && !isRubric && gd?.pmScore !== undefined;
+      const isCorrect = !isTrials && !isRubric && !isPM && gd?.correct !== undefined;
+      return (
+        <div className="mo" onClick={() => setEditingSession(null)}>
+          <div className="md" onClick={e => e.stopPropagation()}>
+            <div className="mh">
+              <span className="mt2">Edit Session - {st?.name || s.guestName || "Unknown"}</span>
+              <button className="xbtn" onClick={() => setEditingSession(null)}>x</button>
+            </div>
+            <div className="mb2">
+              <div className="fr">
+                <div className="fg">
+                  <label className="fl">Date</label>
+                  <input type="date" className="fc" value={editForm.date} onChange={e => setEditForm(f => ({...f, date:e.target.value}))} />
+                </div>
+                <div className="fg">
+                  <label className="fl">Direct Minutes</label>
+                  <input type="number" className="fc" value={editForm.directMinutes} onChange={e => setEditForm(f => ({...f, directMinutes:e.target.value}))} />
+                </div>
+                <div className="fg">
+                  <label className="fl">Indirect Minutes</label>
+                  <input type="number" className="fc" value={editForm.indirectMinutes} onChange={e => setEditForm(f => ({...f, indirectMinutes:e.target.value}))} />
+                </div>
+              </div>
+              {isPM && (
+                <div className="fg">
+                  <label className="fl">PM Score</label>
+                  <input type="number" className="fc" value={editForm.pmScore} onChange={e => setEditForm(f => ({...f, pmScore:e.target.value}))} />
+                </div>
+              )}
+              {isRubric && (
+                <div className="fg">
+                  <label className="fl">Rubric Score</label>
+                  <input className="fc" value={editForm.rubricScore} onChange={e => setEditForm(f => ({...f, rubricScore:e.target.value}))} />
+                </div>
+              )}
+              {isCorrect && (
+                <div className="fr">
+                  <div className="fg">
+                    <label className="fl">Correct</label>
+                    <input type="number" className="fc" value={editForm.correct} onChange={e => setEditForm(f => ({...f, correct:e.target.value}))} />
+                  </div>
+                  <div className="fg">
+                    <label className="fl">Incorrect</label>
+                    <input type="number" className="fc" value={editForm.incorrect} onChange={e => setEditForm(f => ({...f, incorrect:e.target.value}))} />
+                  </div>
+                </div>
+              )}
+              {isTrials && (
+                <div className="fg">
+                  <label className="fl">Trial Data (read only)</label>
+                  <div style={{ fontSize:13, color:"var(--txt2)", background:"var(--inp)", padding:"8px 12px", borderRadius:8 }}>
+                    {gd.trials.map((t,i) => (
+                      <span key={i} style={{ marginRight:4, fontWeight:700, color:t==="C"?"var(--grn)":"var(--red)" }}>{t==="C"?"C":"I"}</span>
+                    ))}
+                    <span style={{ marginLeft:8 }}>({gd.trials.filter(t=>t==="C").length}/{gd.trials.length} correct)</span>
+                  </div>
+                </div>
+              )}
+              <div className="fg">
+                <label className="fl">Notes</label>
+                <textarea className="fc" rows={3} value={editForm.notes} onChange={e => setEditForm(f => ({...f, notes:e.target.value}))} />
+              </div>
+              <div className="fg">
+                <label className="fl">Documentation Status</label>
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={() => setEditForm(f => ({...f, documented:true}))}
+                    style={{ flex:1, padding:"9px 0", borderRadius:9, border:"2px solid", fontFamily:"inherit", cursor:"pointer", fontSize:13, fontWeight:600,
+                      borderColor:editForm.documented===true?"var(--grn)":"var(--bdr)",
+                      background:editForm.documented===true?"#d1f5e5":"var(--inp)",
+                      color:editForm.documented===true?"var(--grn)":"var(--txt2)" }}>
+                    Documented
+                  </button>
+                  <button onClick={() => setEditForm(f => ({...f, documented:false}))}
+                    style={{ flex:1, padding:"9px 0", borderRadius:9, border:"2px solid", fontFamily:"inherit", cursor:"pointer", fontSize:13, fontWeight:600,
+                      borderColor:editForm.documented===false?"#7c3aed":"var(--bdr)",
+                      background:editForm.documented===false?"#f0eaff":"var(--inp)",
+                      color:editForm.documented===false?"#7c3aed":"var(--txt2)" }}>
+                    Not Yet
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="mf">
+              <button className="btn btn-g" onClick={() => setEditingSession(null)}>Cancel</button>
+              <button className="btn btn-p" onClick={() => saveEditSession(s)} disabled={editSaving}>
+                {editSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    })()}
   );
 }
 
