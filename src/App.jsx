@@ -173,8 +173,6 @@ const CSS = `
   --inp:#edf4f0;--shd:0 2px 12px rgba(20,50,35,.08);--shd2:0 6px 28px rgba(20,50,35,.13)
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
-.app{display:flex;min-height:100vh;align-items:flex-start}
-
 /* ── Login Screen ── */
 .login-wrap{min-height:100vh;background:var(--sidebar);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
 .login-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(45,125,94,.25) 0%, transparent 65%),radial-gradient(ellipse at 80% 20%, rgba(45,125,94,.15) 0%, transparent 50%)}
@@ -208,7 +206,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font
 .sb-foot{padding:12px 9px;border-top:1px solid rgba(255,255,255,.07)}
 
 /* ── Main ── */
-.main{margin-left:210px;flex:1;min-height:100vh}
 .topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 6px rgba(20,50,35,.06)}
 .topbar h2{font-family:'Lora',serif;font-size:19px;font-weight:600}
 .topbar-r{display:flex;gap:10px;align-items:center}
@@ -301,10 +298,13 @@ select.fc{cursor:pointer}
 .chk-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:2px 4px;border-radius:4px;transition:transform .1s}
 .chk-btn:hover{transform:scale(1.2)}
 
-/* ── Mobile responsive ── */
-html,body{height:auto;overflow-x:hidden}
-body{min-height:100vh}
+/* ── Scroll & layout ── */
+html{overflow-y:auto}
+body{overflow-y:auto;overflow-x:hidden;min-height:100vh}
+.app{display:block;min-height:100vh}
+.main{margin-left:210px}
 .sg4{grid-template-columns:repeat(4,1fr)}
+/* ── Mobile responsive ── */
 
 @media(max-width:700px){
   /* ── Base ── */
@@ -886,6 +886,8 @@ function TrialTracker({ form, setF, student, goal, sessions }) {
 ══════════════════════════════════════ */
 function TrackingPage({ students, groups, sessions, saveSession, saveGroupSession, deleteSession, toggleDocumented }) {
   const [trackMode, setTrackMode] = useState("individual"); // "individual" | "group"
+  const [studentSearch, setStudentSearch] = useState(""); // for autosuggest
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [form, setForm] = useState({ studentId:"", groupId:"", goalId:"", date:todayStr(), directMinutes:"", indirectMinutes:"", notes:"", correct:"", incorrect:"", rubricScore:"", pmScore:"", trials:[], documented: null });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -982,12 +984,53 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
           </div>
 
           {trackMode === "individual" ? (
-            <div className="fg">
+            <div className="fg" style={{ position:"relative" }}>
               <label className="fl">Student</label>
-              <select className="fc" value={form.studentId} onChange={e => { setF("studentId", e.target.value); setF("goalId",""); setF("trials",[]); }}>
-                <option value="">Select student...</option>
-                {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <input className="fc"
+                placeholder="Type name to search..."
+                value={studentSearch}
+                autoComplete="off"
+                onChange={e => {
+                  setStudentSearch(e.target.value);
+                  setShowSuggestions(true);
+                  if (!e.target.value) { setF("studentId",""); setF("goalId",""); setF("trials",[]); }
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              />
+              {/* Selected student chip */}
+              {form.studentId && (() => { const st = students.find(s=>s.id===form.studentId); return st ? (
+                <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5, padding:"5px 10px", background:"var(--inp)", borderRadius:8, border:"1.5px solid var(--pri)" }}>
+                  <span style={{ fontSize:13, fontWeight:600, color:"var(--pri)", flex:1 }}>{st.name}</span>
+                  <button onClick={() => { setF("studentId",""); setF("goalId",""); setF("trials",[]); setStudentSearch(""); }}
+                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"var(--txt2)", lineHeight:1, padding:0 }}>×</button>
+                </div>
+              ) : null; })()}
+              {/* Suggestions dropdown */}
+              {showSuggestions && studentSearch.trim() && (() => {
+                const q = studentSearch.toLowerCase();
+                const matches = students.filter(s => s.name.toLowerCase().includes(q)).slice(0, 8);
+                if (!matches.length) return (
+                  <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:200, background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:9, boxShadow:"0 6px 20px rgba(0,0,0,.12)", padding:"10px 14px", fontSize:13, color:"var(--txt2)" }}>
+                    No students found
+                  </div>
+                );
+                return (
+                  <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:200, background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:9, boxShadow:"0 6px 20px rgba(0,0,0,.12)", overflow:"hidden" }}>
+                    {matches.map(s => (
+                      <div key={s.id}
+                        onMouseDown={() => { setF("studentId", s.id); setF("goalId",""); setF("trials",[]); setStudentSearch(s.name); setShowSuggestions(false); }}
+                        style={{ padding:"10px 14px", cursor:"pointer", fontSize:13, borderBottom:"1px solid var(--bdr)", display:"flex", alignItems:"center", gap:8 }}
+                        onMouseEnter={e => e.currentTarget.style.background="var(--inp)"}
+                        onMouseLeave={e => e.currentTarget.style.background="#fff"}>
+                        <span style={{ fontWeight:600 }}>{s.name}</span>
+                        {s.grade && <span style={{ fontSize:11, color:"var(--txt2)" }}>{s.grade}</span>}
+                        {s.studentType && s.studentType!=="IEP" && <span className={`bdg ${s.studentType==="504"?"bdg-a":""}`} style={{ fontSize:10, ...(s.studentType==="GenEd"?{background:"#f0eaff",color:"#7c3aed"}:{}) }}>{s.studentType}</span>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <div className="fg">
