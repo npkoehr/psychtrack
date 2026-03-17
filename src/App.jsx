@@ -994,6 +994,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
   }, [sessions, filterStudent, sessionSearch, students]);
 
   return (
+    <>
     <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start", width:"100%" }}>
       <div className="card">
         <div className="ch">
@@ -1477,6 +1478,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
         </div>
       );
     })()}
+    </>
   );
 }
 
