@@ -309,25 +309,25 @@ select.fc{cursor:pointer}
   body{font-size:15px;touch-action:pan-y}
   .sb{display:none}
   .app{display:block}
-  .main{margin-left:0;height:100vh;overflow-y:scroll;padding-bottom:72px}
-  .content{padding:12px;box-sizing:border-box;width:100%}
+  .main{margin-left:0;height:100vh;overflow-y:scroll;overflow-x:hidden;padding-bottom:72px}
+  .content{padding:12px;box-sizing:border-box;width:100%;overflow-x:hidden}
   .topbar{padding:11px 14px}
   .topbar h2{font-size:16px}
   .topbar-r .sm{display:none}
   .btn-xl{display:none}
 
   /* ── Cards ── */
-  .card{border-radius:10px}
+  .card{border-radius:10px;max-width:100%;overflow:hidden}
   .ch{padding:12px 14px;flex-wrap:wrap;gap:6px}
-  .cb{padding:14px}
+  .cb{padding:14px;overflow-x:hidden}
   .ct{font-size:15px}
 
   /* ── Forms ── */
   .fg{margin-bottom:14px}
   .fl{font-size:12px;margin-bottom:5px}
-  .fc{font-size:16px;padding:12px 13px;border-radius:9px}
-  select.fc{font-size:16px}
-  textarea.fc{font-size:16px;min-height:72px}
+  .fc{font-size:16px;padding:12px 13px;border-radius:9px;width:100%;box-sizing:border-box}
+  select.fc{font-size:16px;width:100%}
+  textarea.fc{font-size:16px;min-height:72px;width:100%}
   .fr{grid-template-columns:1fr}
   .fr3{grid-template-columns:1fr}
 
@@ -344,7 +344,7 @@ select.fc{cursor:pointer}
   .sv{font-size:20px}
 
   /* ── Tracking page: single column ── */
-  .track-grid{grid-template-columns:1fr!important}
+  .track-grid{grid-template-columns:1fr!important;width:100%!important;max-width:100vw!important}
 
   /* ── Modal: slides up from bottom ── */
   .mo{align-items:flex-end;padding:0}
@@ -995,7 +995,7 @@ function TrackingPage({ students, groups, sessions, saveSession, saveGroupSessio
 
   return (
     <>
-    <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start", width:"100%" }}>
+    <div className="track-grid" style={{ display:"grid", gridTemplateColumns:"420px 1fr", gap:18, alignItems:"start", width:"100%", maxWidth:"100%" }}>
       <div className="card">
         <div className="ch">
           <span className="ct">Log Session</span>
