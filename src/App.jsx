@@ -299,8 +299,8 @@ select.fc{cursor:pointer}
 .chk-btn:hover{transform:scale(1.2)}
 
 /* ── Layout ── */
-.app{min-height:100vh}
-.main{margin-left:210px}
+.app{display:flex;height:100vh;overflow:hidden}
+.main{margin-left:210px;flex:1;height:100vh;overflow-y:scroll;overflow-x:hidden}
 .sg4{grid-template-columns:repeat(4,1fr)}
 /* ── Mobile responsive ── */
 
@@ -309,7 +309,7 @@ select.fc{cursor:pointer}
   body{font-size:15px;touch-action:pan-y}
   .sb{display:none}
   .app{display:block}
-  .main{margin-left:0;padding-bottom:72px}
+  .main{margin-left:0;height:100vh;overflow-y:scroll;padding-bottom:72px}
   .content{padding:12px;box-sizing:border-box;width:100%}
   .topbar{padding:11px 14px}
   .topbar h2{font-size:16px}
