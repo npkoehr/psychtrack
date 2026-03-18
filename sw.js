@@ -1,4 +1,4 @@
-const CACHE = "psychtrack-v1";
+const CACHE = "mhtrack-v6";
 const ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
