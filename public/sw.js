@@ -1,4 +1,4 @@
-const CACHE = "mhtrack-v5";
+const CACHE = "mhtrack-v6";
 const ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
@@ -25,10 +25,3 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(e.request))
   );
 });
-```
-
----
-
-Once Netlify redeploys, test it by visiting:
-```
-https://mhprovidertracking.netlify.app/manifest.json
