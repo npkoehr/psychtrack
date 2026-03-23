@@ -3030,6 +3030,8 @@ function EvaluationsPage({ students, saveStudent }) {
   // Custom test builder for MH/Custom evals
   const [customTestInput, setCustomTestInput] = useState("");
   const [customTestSection, setCustomTestSection] = useState("");
+  const [evalStudentSearch, setEvalStudentSearch] = useState("");
+  const [evalShowSuggestions, setEvalShowSuggestions] = useState(false);
 
   // New eval form
   const defaultEvalForm = () => ({
@@ -3050,7 +3052,8 @@ function EvaluationsPage({ students, saveStudent }) {
     const list = [];
     students.forEach(s => {
       (s.evaluations || []).forEach(ev => {
-        list.push({ ...ev, studentName: s.name, studentObj: s });
+        const name = s.isGuestEvalStore ? (ev.guestName || "Unknown") : s.name;
+        list.push({ ...ev, studentName: name, studentObj: s.isGuestEvalStore ? null : s });
       });
     });
     return list.sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
@@ -3178,18 +3181,25 @@ function EvaluationsPage({ students, saveStudent }) {
     await saveStudent({ ...s, evaluations: [...(s.evaluations || []), ev] });
   };
 
-  const handleOpenNew = (studentId = "") => {
+  const handleOpenNew = (studentId = "", studentName = "") => {
     setForm({ ...defaultEvalForm(), studentId, customTests:[] });
     setEditEvalId(null);
     setCustomTestInput("");
     setCustomTestSection("");
+    setEvalStudentSearch(studentName);
+    setEvalShowSuggestions(false);
     setShowModal(true);
   };
 
   const handleSubmit = async () => {
     if (!form.studentId || !form.category) return;
-    const st = students.find(s => s.id === form.studentId);
-    if (!st) return;
+    // If no student selected but name typed, treat as guest
+    const resolvedId = form.studentId || (evalStudentSearch.trim() ? "guest::"+evalStudentSearch.trim() : "");
+    if (!resolvedId || !form.category) return;
+    const isGuest = resolvedId.startsWith("guest::");
+    const guestName = isGuest ? resolvedId.slice(7) : undefined;
+    const st = isGuest ? null : students.find(s => s.id === resolvedId);
+    if (!isGuest && !st) return;
     const template = EVAL_TEMPLATES[form.category];
     let checklist = template
       ? template.components.map(c => ({ title: c.title, subtasks: c.subtasks.map(t => ({ text: t, done: false })) }))
@@ -3211,9 +3221,16 @@ function EvaluationsPage({ students, saveStudent }) {
         }
       });
     }
-    const ev = { id: form.id || uid(), studentId: form.studentId, category: form.category, dueDate: form.dueDate, startDate: form.startDate || todayStr(), status: form.status, notes: form.notes, checklist };
-    const existingEvals = (st.evaluations || []).filter(e => e.id !== ev.id);
-    await saveStudent({ ...st, evaluations: [...existingEvals, ev] });
+    const ev = { id: form.id || uid(), studentId: isGuest ? null : resolvedId, guestName, category: form.category, dueDate: form.dueDate, startDate: form.startDate || todayStr(), status: form.status, notes: form.notes, checklist };
+    if (isGuest) {
+      // Save to a special guest-evals student record
+      const guestRecord = students.find(s => s.id === "_guest_evals") || { id: "_guest_evals", name: "__guest_evals__", isGuestEvalStore: true, evaluations: [] };
+      const existingEvals = (guestRecord.evaluations || []).filter(e => e.id !== ev.id);
+      await saveStudent({ ...guestRecord, evaluations: [...existingEvals, ev] });
+    } else {
+      const existingEvals = (st.evaluations || []).filter(e => e.id !== ev.id);
+      await saveStudent({ ...st, evaluations: [...existingEvals, ev] });
+    }
     setShowModal(false);
   };
 
@@ -3240,7 +3257,7 @@ function EvaluationsPage({ students, saveStudent }) {
               <div key={s.id} style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", borderRadius:8, padding:"7px 12px", border:"1px solid #f0d060" }}>
                 <span style={{ fontWeight:600, fontSize:13 }}>{s.name}</span>
                 <span style={{ fontSize:12, color:"var(--txt2)" }}>Due: {s.meetingDueDate}</span>
-                <button className="btn btn-sm" style={{ background:"#1a5e38", color:"#fff", fontSize:12 }} onClick={() => handleOpenNew(s.id)}>
+                <button className="btn btn-sm" style={{ background:"#1a5e38", color:"#fff", fontSize:12 }} onClick={() => handleOpenNew(s.id, s.name)}>
                   Start Eval
                 </button>
               </div>
@@ -3407,12 +3424,51 @@ function EvaluationsPage({ students, saveStudent }) {
               <button className="xbtn" onClick={() => setShowModal(false)}>x</button>
             </div>
             <div className="mb2">
-              <div className="fg">
+              <div className="fg" style={{ position:"relative" }}>
                 <label className="fl">Student *</label>
-                <select className="fc" value={form.studentId} onChange={e => setF("studentId", e.target.value)}>
-                  <option value="">Select student...</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <input className="fc"
+                  placeholder="Type name to search or add new..."
+                  value={evalStudentSearch}
+                  autoComplete="off"
+                  onChange={e => {
+                    setEvalStudentSearch(e.target.value);
+                    setEvalShowSuggestions(true);
+                    if (!e.target.value) { setF("studentId", ""); }
+                  }}
+                  onFocus={() => setEvalShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setEvalShowSuggestions(false), 150)}
+                />
+                {form.studentId && (
+                  <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5, padding:"5px 10px", background:"var(--inp)", borderRadius:8, border:"1.5px solid var(--pri)" }}>
+                    <span style={{ fontSize:13, fontWeight:600, color:"var(--pri)", flex:1 }}>
+                      {form.studentId.startsWith("guest::") ? form.studentId.slice(7) + " (not on caseload)" : (students.find(s=>s.id===form.studentId)?.name || evalStudentSearch)}
+                    </span>
+                    <button onClick={() => { setF("studentId",""); setEvalStudentSearch(""); }}
+                      style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"var(--txt2)", lineHeight:1, padding:0 }}>x</button>
+                  </div>
+                )}
+                {evalShowSuggestions && evalStudentSearch.trim() && !form.studentId && (() => {
+                  const q = evalStudentSearch.toLowerCase();
+                  const matches = students.filter(s => !s.isGuestEvalStore && s.name.toLowerCase().includes(q)).slice(0, 8);
+                  return (
+                    <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:200, background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:9, boxShadow:"0 6px 20px rgba(0,0,0,.12)", overflow:"hidden" }}>
+                      {matches.map(s => (
+                        <div key={s.id}
+                          onMouseDown={() => { setF("studentId", s.id); setEvalStudentSearch(s.name); setEvalShowSuggestions(false); }}
+                          style={{ padding:"10px 14px", cursor:"pointer", fontSize:13, borderBottom:"1px solid var(--bdr)", display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ fontWeight:600 }}>{s.name}</span>
+                          {s.grade && <span style={{ fontSize:11, color:"var(--txt2)" }}>{s.grade}</span>}
+                          {s.studentType && s.studentType!=="IEP" && <span className={`bdg ${s.studentType==="504"?"bdg-a":""}`} style={{ fontSize:10 }}>{s.studentType}</span>}
+                        </div>
+                      ))}
+                      <div
+                        onMouseDown={() => { setF("studentId", "guest::"+evalStudentSearch.trim()); setEvalShowSuggestions(false); }}
+                        style={{ padding:"10px 14px", fontSize:13, fontWeight:600, color:"var(--pri)", cursor:"pointer", background:"var(--inp)", borderTop:"1px solid var(--bdr)" }}>
+                        + Add eval for "{evalStudentSearch}" (not on caseload)
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="fg">
                 <label className="fl">Disability Category *</label>
@@ -3511,7 +3567,7 @@ function EvaluationsPage({ students, saveStudent }) {
             </div>
             <div className="mf">
               <button className="btn btn-g" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn btn-p" onClick={handleSubmit} disabled={!form.studentId || !form.category}>
+              <button className="btn btn-p" onClick={handleSubmit} disabled={(!form.studentId && !evalStudentSearch.trim()) || !form.category}>
                 Create Evaluation
               </button>
             </div>
