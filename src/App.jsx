@@ -585,34 +585,59 @@ export default function App() {
   const realStudents = students.filter(s => !s.isGroup && !s.archived);
   const groups = students.filter(s => s.isGroup);
 
-  const saveStudent = useCallback(async (student) => { setSyncStatus("syncing"); await upsertStudent(student); }, []);
+  const saveStudent = useCallback(async (student) => {
+    setSyncStatus("syncing");
+    const { error } = await supabase.from("students").upsert({ id: student.id, data: student, updated_at: new Date().toISOString() });
+    if (error) { console.error("saveStudent:", error); setSyncStatus("err"); return; }
+    setStudents(prev => [...prev.filter(s => s.id !== student.id), student]);
+    setSyncStatus("live");
+  }, []);
+
   const deleteStudentFn = useCallback(async (id) => {
     setSyncStatus("syncing");
     await removeSessionsByStudent(id);
     await removeStudent(id);
     setSessions(prev => prev.filter(s => s.studentId !== id));
     setStudents(prev => prev.filter(s => s.id !== id));
+    setSyncStatus("live");
   }, []);
-  const saveSessionFn = useCallback(async (session) => { setSyncStatus("syncing"); await upsertSession(session); }, []);
+
+  const saveSessionFn = useCallback(async (session) => {
+    setSyncStatus("syncing");
+    const { error } = await supabase.from("sessions").upsert({ id: session.id, student_id: session.studentId || null, data: session });
+    if (error) { console.error("saveSession:", error); setSyncStatus("err"); return; }
+    setSessions(prev => [session, ...prev.filter(s => s.id !== session.id)]);
+    setSyncStatus("live");
+  }, []);
+
   const saveGroupSessionFn = useCallback(async (group, sessionTemplate) => {
     setSyncStatus("syncing");
     const memberIds = group.memberIds || [];
-    await Promise.all(memberIds.map(memberId => {
-      const s = { ...sessionTemplate, id: uid(), studentId: memberId, groupId: group.id, groupName: group.name };
-      return upsertSession(s);
+    const newSessions = memberIds.map(memberId => ({
+      ...sessionTemplate, id: uid(), studentId: memberId, groupId: group.id, groupName: group.name
     }));
+    const rows = newSessions.map(s => ({ id: s.id, student_id: s.studentId, data: s }));
+    const { error } = await supabase.from("sessions").upsert(rows);
+    if (error) { console.error("saveGroupSession:", error); setSyncStatus("err"); return; }
+    setSessions(prev => [...newSessions, ...prev]);
+    setSyncStatus("live");
   }, []);
 
   const toggleDocumentedFn = useCallback(async (session) => {
     const updated = { ...session, documented: !session.documented };
     setSyncStatus("syncing");
-    await upsertSession(updated);
+    const { error } = await supabase.from("sessions").upsert({ id: updated.id, student_id: updated.studentId || null, data: updated });
+    if (error) { console.error("toggleDocumented:", error); setSyncStatus("err"); return; }
     setSessions(prev => prev.map(s => s.id === updated.id ? updated : s));
+    setSyncStatus("live");
   }, []);
+
   const deleteSessionFn = useCallback(async (id) => {
     setSyncStatus("syncing");
-    await removeSession(id);
+    const { error } = await supabase.from("sessions").delete().eq("id", id);
+    if (error) { console.error("deleteSession:", error); setSyncStatus("err"); return; }
     setSessions(prev => prev.filter(s => s.id !== id));
+    setSyncStatus("live");
   }, []);
 
   const handleLogout = () => { clearSession(); setAuthed(false); };
@@ -641,7 +666,14 @@ export default function App() {
     { id: "manage",    ico: "👥", label: "Manage Students" },
   ];
   const titles = { tracking: "Session Tracking", services: "Services", goals: "Goal Progress", meetings: "Meetings", evals: "Evaluations", manage: "Manage Students" };
-  const syncLabel = syncStatus === "syncing" ? "⟳ Syncing..." : syncStatus === "err" ? "⚠ Sync error" : "● Live";
+  const syncLabel = syncStatus === "syncing" ? "Syncing..." : syncStatus === "err" ? "Sync error - tap to retry" : "Live";
+  const handleSyncRetry = async () => {
+    setSyncStatus("syncing");
+    const [st, se] = await Promise.all([fetchStudents(), fetchSessions()]);
+    if (st !== null) setStudents(st);
+    if (se !== null) setSessions(se);
+    setSyncStatus("live");
+  };
 
   return (
     <>
@@ -652,7 +684,7 @@ export default function App() {
             <h1>PsychTrack</h1>
             <p>Caseload Manager</p>
           </div>
-          <div className={`sb-sync ${syncStatus}`}>{syncLabel}</div>
+          <div className={`sb-sync ${syncStatus}`} onClick={syncStatus === "err" ? handleSyncRetry : undefined} style={{ cursor: syncStatus === "err" ? "pointer" : "default" }}>{syncLabel}</div>
           <div className="sb-nav">
             {nav.map(n => (
               <div key={n.id} className={`ni ${page === n.id ? "active" : ""}`} onClick={() => setPage(n.id)}>
